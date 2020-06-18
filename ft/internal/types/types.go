@@ -34,9 +34,8 @@ func (msg DenomInfo) String() string {
   Creator: 			 %s
   Denom:			 %s
   AssetHash:		 %s
-  Creator:        	 %s
   TotalSupply:		 %s
-`, msg.Creator, msg.Denom, msg.AssetHash, msg.Creator, msg.TotalSupply.String())
+`, msg.Creator, msg.Denom, msg.AssetHash, msg.TotalSupply.String())
 }
 
 type DenomCrossChainInfo struct {

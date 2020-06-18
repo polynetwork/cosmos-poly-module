@@ -95,6 +95,7 @@ type (
 	MsgLock                         = types.MsgLock
 	MsgCreateDenom                  = types.MsgCreateDenom
 	MsgCreateCoinAndDelegateToProxy = types.MsgCreateCoinAndDelegateToProxy
-
-	TxArgs = types.TxArgs
+	DenomInfo                       = types.DenomInfo
+	DenomCrossChainInfo             = types.DenomCrossChainInfo
+	TxArgs                          = types.TxArgs
 )

@@ -31,14 +31,13 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case types.MsgCreateCoinAndDelegateToProxy:
 			return handleMsgCreateCoinAndDelegateToProxy(ctx, k, msg)
-
 		case types.MsgCreateDenom:
 			return handleMsgCreateDenom(ctx, k, msg)
-
 		case types.MsgBindAssetHash:
 			return handleMsgBindAssetHash(ctx, k, msg)
 		case types.MsgLock:
 			return handleMsgLock(ctx, k, msg)
+
 		case types.MsgCreateCoins:
 			return handleMsgCreateCoins(ctx, k, msg)
 

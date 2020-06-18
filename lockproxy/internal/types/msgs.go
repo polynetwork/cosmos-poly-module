@@ -94,7 +94,7 @@ func (msg MsgBindProxyHash) ValidateBasic() error {
 		// Disable software upgrade proposals as they are currently equivalent
 		// to text proposals. Re-enable once a valid software upgrade proposal
 		// handler is implemented.
-		return ErrToAssetHash("Empty MsgBindProxyHash.ToAssetHash")
+		return ErrMsgBindProxyHash("Empty MsgBindProxyHash.ToChainProxyHash")
 	}
 
 	return nil
