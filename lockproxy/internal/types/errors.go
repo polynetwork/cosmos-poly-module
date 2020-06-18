@@ -38,6 +38,7 @@ var (
 	ErrBindAssetHashType           = sdkerrors.Register(ModuleName, 11, "ErrBindAssetHashType")
 	ErrLockType                    = sdkerrors.Register(ModuleName, 12, "ErrLockType")
 	ErrUnLockType                  = sdkerrors.Register(ModuleName, 13, "ErrUnLockType")
+	ErrMsgBindProxyHashType        = sdkerrors.Register(ModuleName, 14, "ErrMsgBindProxyHashType")
 )
 
 func ErrInvalidChainId(chainId uint64) error {
@@ -88,4 +89,8 @@ func ErrLock(reason string) error {
 }
 func ErrUnLock(reason string) error {
 	return sdkerrors.Wrapf(ErrUnLockType, fmt.Sprintf("Reason: %s", reason))
+}
+
+func ErrMsgBindProxyHash(reason string) error {
+	return sdkerrors.Wrapf(ErrMsgBindProxyHashType, fmt.Sprintf("Reason: %s", reason))
 }

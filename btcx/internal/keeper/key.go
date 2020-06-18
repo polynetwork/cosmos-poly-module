@@ -38,6 +38,7 @@ var (
 	DenomToRedeemScriptKey         = []byte{0x06}
 )
 
+// TODO: delete this method
 func GetScriptHashAndChainIdToAssetHashKey(scriptHash []byte, chainId uint64) []byte {
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, chainId)

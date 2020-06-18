@@ -130,12 +130,16 @@ func (k Keeper) Lock(ctx sdk.Context, fromAddr sdk.AccAddress, sourceAssetDenom 
 	store := ctx.KVStore(k.storeKey)
 	toAssetHash := store.Get(GetBindAssetHashKey([]byte(sourceAssetDenom), toChainId))
 	if toAssetHash == nil {
-		return types.ErrLock(fmt.Sprintf("Invoke Lock of `btcx` module for denom: %s is illgeal", sourceAssetDenom))
+		return types.ErrLock(fmt.Sprintf("Invoke Lock of `btcx` module for denom: %s is illgeal due to toAssetHash empty for chainId: %d", sourceAssetDenom, toChainId))
 	}
 	sink := polycommon.NewZeroCopySink(nil)
 	// construct args bytes
 	if toChainId == types.BtcChainId {
-		redeemScript := store.Get(GetDenomToRedeemScriptKey(sourceAssetDenom))
+		creator := k.ccmKeeper.GetDenomCreator(ctx, sourceAssetDenom)
+		if creator.Empty() {
+			return types.ErrLock(fmt.Sprintf("Creator of denom: %s is Empty", sourceAssetDenom))
+		}
+		redeemScript := store.Get(GetScriptHashToRedeemScript(store.Get(GetCreatorDenomToScriptHashKey(creator, sourceAssetDenom))))
 		toBtcArgs := types.ToBTCArgs{
 			ToBtcAddress: toAddr,
 			Amount:       amount.BigInt().Uint64(),
@@ -236,7 +240,7 @@ func (k Keeper) GetDenomCrossChainInfo(ctx sdk.Context, denom string, toChainId 
 	return denomInfo
 }
 func (k Keeper) ContainToContractAddr(ctx sdk.Context, toContractAddr []byte, fromChainId uint64) bool {
-	return ctx.KVStore(k.storeKey).Get((GetScriptHashAndChainIdToAssetHashKey(toContractAddr, fromChainId))) != nil
+	return ctx.KVStore(k.storeKey).Get((GetBindAssetHashKey(toContractAddr, fromChainId))) != nil
 }
 
 func (k Keeper) ValidCreator(ctx sdk.Context, denom string, creator sdk.AccAddress) bool {

@@ -69,4 +69,5 @@ type (
 	MsgProcessCrossChainTx = types.MsgProcessCrossChainTx
 	UnlockKeeper           = types.UnlockKeeper
 	GenesisState           = types.GenesisState
+	Params                 = types.Params
 )

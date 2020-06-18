@@ -29,6 +29,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
+
 		case types.MsgCreateLockProxy:
 			return handleMsgCreateLockProxy(ctx, k, msg)
 		case types.MsgBindProxyHash:

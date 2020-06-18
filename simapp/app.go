@@ -83,6 +83,12 @@ var (
 		slashing.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
+
+		ccm.AppModuleBasic{},
+		headersync.AppModuleBasic{},
+		btcx.AppModuleBasic{},
+		lockproxy.AppModuleBasic{},
+		ft.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -147,7 +153,7 @@ type SimApp struct {
 	ParamsKeeper     params.Keeper
 	EvidenceKeeper   evidence.Keeper
 	HeaderSyncKeeper headersync.Keeper
-	CcmKeeepr        ccm.Keeper
+	CcmKeeper        ccm.Keeper
 	BtcxKeeper       btcx.Keeper
 	LockProxyKeeper  lockproxy.Keeper
 	FtKeeper         ft.Keeper
@@ -257,15 +263,14 @@ func NewSimApp(
 	)
 
 	app.HeaderSyncKeeper = headersync.NewKeeper(app.cdc, keys[headersync.StoreKey])
-	app.CcmKeeepr = ccm.NewKeeper(app.cdc, keys[ccm.StoreKey], app.subspaces[ccm.ModuleName], app.HeaderSyncKeeper, nil)
-	app.BtcxKeeper = btcx.NewKeeper(app.cdc, keys[btcx.StoreKey], app.AccountKeeper, app.BankKeeper, app.SupplyKeeper, app.CcmKeeepr)
-	app.LockProxyKeeper = lockproxy.NewKeeper(app.cdc, keys[lockproxy.StoreKey], app.AccountKeeper, app.SupplyKeeper, app.CcmKeeepr)
-	app.FtKeeper = ft.NewKeeper(app.cdc, keys[ft.StoreKey], app.AccountKeeper, app.BankKeeper, app.SupplyKeeper, app.LockProxyKeeper, app.CcmKeeepr)
-	app.CcmKeeepr.MountUnlockKeeperMap(map[string]ccm.UnlockKeeper{
+	app.CcmKeeper = ccm.NewKeeper(app.cdc, keys[ccm.StoreKey], app.subspaces[ccm.ModuleName], app.HeaderSyncKeeper, map[string]ccm.UnlockKeeper{
 		btcx.StoreKey:      app.BtcxKeeper,
-		lockproxy.StoreKey: app.LockProxyKeeper,
 		ft.StoreKey:        app.FtKeeper,
+		lockproxy.StoreKey: app.LockProxyKeeper,
 	})
+	app.BtcxKeeper = btcx.NewKeeper(app.cdc, keys[btcx.StoreKey], app.AccountKeeper, app.BankKeeper, app.SupplyKeeper, app.CcmKeeper)
+	app.LockProxyKeeper = lockproxy.NewKeeper(app.cdc, keys[lockproxy.StoreKey], app.AccountKeeper, app.SupplyKeeper, app.CcmKeeper)
+	app.FtKeeper = ft.NewKeeper(app.cdc, keys[ft.StoreKey], app.AccountKeeper, app.BankKeeper, app.SupplyKeeper, app.LockProxyKeeper, app.CcmKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -283,7 +288,7 @@ func NewSimApp(
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		headersync.NewAppModule(app.HeaderSyncKeeper),
-		ccm.NewAppModule(app.CcmKeeepr),
+		ccm.NewAppModule(app.CcmKeeper),
 		btcx.NewAppModule(app.BtcxKeeper),
 		lockproxy.NewAppModule(app.LockProxyKeeper),
 		ft.NewAppModule(app.FtKeeper),
