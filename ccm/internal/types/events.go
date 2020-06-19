@@ -28,8 +28,8 @@ const (
 	AttributeKeyMakeTxParam     = "make_tx_param"
 
 	EventTypeVerifyToCosmosProof                        = "verify_to_cosmos_proof"
-	AttributeKeyMerkleValueTxHash                       = "merkle_value.txhash"
-	AttributeKeyMerkleValueMakeTxParamTxHash            = "merkle_value.make_tx_param.txhash"
-	AttributeKeyMerkleValueMakeTxParamToContractAddress = "merkle_value.make_tx_param.to_contract_address"
+	AttributeKeyMerkleValueTxHash                       = "merkle_value:txhash"
+	AttributeKeyMerkleValueMakeTxParamTxHash            = "merkle_value:make_tx_param:txhash"
+	AttributeKeyMerkleValueMakeTxParamToContractAddress = "merkle_value:make_tx_param:to_contract_address"
 	AttributeKeyFromChainId                             = "from_chain_id"
 )

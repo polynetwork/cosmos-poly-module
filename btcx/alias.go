@@ -33,30 +33,23 @@ const (
 	RouterKey         = types.RouterKey
 
 	AttributeValueCategory = types.AttributeValueCategory
-	EventTypeCreateDenom   = types.EventTypeCreateDenom
 
-	AttributeKeyToChainId = types.AttributeKeyToChainId
-
-	EventTypeBindAsset           = types.EventTypeBindAsset
+	EventTypeCreateDenom         = types.EventTypeCreateDenom
 	AttributeKeySourceAssetDenom = types.AttributeKeySourceAssetDenom
 	AttributeKeyFromAssetHash    = types.AttributeKeyFromAssetHash
-	AttributeKeyToChainAssetHash = types.AttributeKeyToChainAssetHash
+	AttributeKeyRedeemScript     = types.AttributeKeyRedeemScript
+
+	EventTypeBindAsset      = types.EventTypeBindAsset
+	AttributeKeyCreator     = types.AttributeKeyCreator
+	AttributeKeyToChainId   = types.AttributeKeyToChainId
+	AttributeKeyToAssetHash = types.AttributeKeyToAssetHash
 
 	EventTypeLock           = types.EventTypeLock
 	AttributeKeyFromAddress = types.AttributeKeyFromAddress
 	AttributeKeyToAddress   = types.AttributeKeyToAddress
 	AttributeKeyAmount      = types.AttributeKeyAmount
 
-	AttributeKeyFromChainId = types.AttributeKeyFromChainId
-
-	EventTypeUnlock              = types.EventTypeUnlock
-	AttributeKeyFromContractHash = types.AttributeKeyFromContractHash
-	AttributeKeyToAssetDenom     = types.AttributeKeyToAssetDenom
-
-	AttributeKeyCreator         = types.AttributeKeyCreator
-	AttributeKeyRedeemKey       = types.AttributeKeyRedeemKey
-	AttributeKeyRedeemScript    = types.AttributeKeyRedeemScript
-	AttributeKeySourceAssetHash = types.AttributeKeySourceAssetHash
+	EventTypeUnlock = types.EventTypeUnlock
 )
 
 var (
@@ -71,8 +64,6 @@ var (
 
 	// variable aliases
 	ModuleCdc = types.ModuleCdc
-
-	ErrInvalidChainId = types.ErrInvalidChainId
 )
 
 type (

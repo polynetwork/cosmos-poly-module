@@ -119,7 +119,7 @@ func (k Keeper) BindAssetHash(ctx sdk.Context, creator sdk.AccAddress, sourceAss
 			sdk.NewAttribute(types.AttributeKeySourceAssetDenom, sourceAssetDenom),
 			sdk.NewAttribute(types.AttributeKeyFromAssetHash, hex.EncodeToString(sdk.AccAddress(sourceAssetDenom))),
 			sdk.NewAttribute(types.AttributeKeyToChainId, strconv.FormatUint(toChainId, 10)),
-			sdk.NewAttribute(types.AttributeKeyToChainAssetHash, hex.EncodeToString(toAssetHash)),
+			sdk.NewAttribute(types.AttributeKeyToAssetHash, hex.EncodeToString(toAssetHash)),
 		),
 	})
 	return nil
@@ -159,7 +159,7 @@ func (k Keeper) Lock(ctx sdk.Context, fromAddr sdk.AccAddress, sourceAssetDenom 
 	}
 
 	// invoke cross_chain_manager module to construct cosmos proof
-	if err := k.ccmKeeper.CreateCrossChainTx(ctx, toChainId, toAssetHash, toAssetHash, "unlock", sink.Bytes()); err != nil {
+	if err := k.ccmKeeper.CreateCrossChainTx(ctx, toChainId, []byte(sourceAssetDenom), toAssetHash, "unlock", sink.Bytes()); err != nil {
 		return types.ErrLock(fmt.Sprintf("Lock, CreateCrossChainTx Error:%s", err.Error()))
 	}
 	// burn coins from fromAddr
@@ -169,11 +169,10 @@ func (k Keeper) Lock(ctx sdk.Context, fromAddr sdk.AccAddress, sourceAssetDenom 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeLock,
-			sdk.NewAttribute(types.AttributeKeySourceAssetDenom, sourceAssetDenom),
-			sdk.NewAttribute(types.AttributeKeySourceAssetHash, hex.EncodeToString([]byte(sourceAssetDenom))),
-			sdk.NewAttribute(types.AttributeKeyToChainId, strconv.FormatUint(toChainId, 10)),
-			sdk.NewAttribute(types.AttributeKeyToChainAssetHash, hex.EncodeToString(toAssetHash)),
+			sdk.NewAttribute(types.AttributeKeyFromAssetHash, hex.EncodeToString([]byte(sourceAssetDenom))),
 			sdk.NewAttribute(types.AttributeKeyFromAddress, fromAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyToChainId, strconv.FormatUint(toChainId, 10)),
+			sdk.NewAttribute(types.AttributeKeyToAssetHash, hex.EncodeToString(toAssetHash)),
 			sdk.NewAttribute(types.AttributeKeyToAddress, hex.EncodeToString(toAddr)),
 			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 		),
@@ -203,9 +202,7 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeUnlock,
-			sdk.NewAttribute(types.AttributeKeyFromChainId, strconv.FormatUint(fromChainId, 10)),
-			sdk.NewAttribute(types.AttributeKeyFromContractHash, hex.EncodeToString(fromContractAddr)),
-			sdk.NewAttribute(types.AttributeKeyToAssetDenom, toDenom),
+			sdk.NewAttribute(types.AttributeKeyToAssetHash, hex.EncodeToString(toContractAddr)),
 			sdk.NewAttribute(types.AttributeKeyToAddress, toAccAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 		),
