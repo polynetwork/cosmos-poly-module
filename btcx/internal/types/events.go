@@ -21,28 +21,20 @@ package types
 const (
 	AttributeValueCategory = ModuleName
 
-	AttributeKeyToChainId = "to_chain_id"
-
-	EventTypeBindAsset  = "bind_asset_hash"
-	AttributeKeyCreator = "creator"
-
-	AttributeKeyFromAssetHash    = "from_asset_hash"
-	AttributeKeyToChainAssetHash = "to_chain_asset_hash"
-
-	EventTypeLock                = "lock"
-	AttributeKeySourceAssetHash  = "source_asset_hash"
+	EventTypeCreateDenom         = "create_denom"
 	AttributeKeySourceAssetDenom = "source_asset_denom"
-	AttributeKeyFromAddress      = "from_address"
-	AttributeKeyToAddress        = "to_address"
-	AttributeKeyAmount           = "amount"
+	AttributeKeyFromAssetHash    = "from_asset_hash"
+	AttributeKeyRedeemScript     = "redeem_script"
 
-	AttributeKeyFromChainId = "from_chain_id"
+	EventTypeBindAsset      = "bind_asset_hash"
+	AttributeKeyCreator     = "creator"
+	AttributeKeyToChainId   = "to_chain_id"
+	AttributeKeyToAssetHash = "to_asset_hash"
 
-	EventTypeUnlock              = "unlock"
-	AttributeKeyFromContractHash = "from_contract_hash"
-	AttributeKeyToAssetDenom     = "to_asset_denom"
+	EventTypeLock           = "lock"
+	AttributeKeyFromAddress = "from_address"
+	AttributeKeyToAddress   = "to_address"
+	AttributeKeyAmount      = "amount"
 
-	EventTypeCreateDenom     = "create_denom"
-	AttributeKeyRedeemKey    = "redeem_key"
-	AttributeKeyRedeemScript = "redeem_script"
+	EventTypeUnlock = "unlock"
 )
