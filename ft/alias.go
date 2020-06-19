@@ -18,6 +18,7 @@
 package ft
 
 import (
+	"github.com/polynetwork/cosmos-poly-module/ft/exported"
 	"github.com/polynetwork/cosmos-poly-module/ft/internal/keeper"
 	"github.com/polynetwork/cosmos-poly-module/ft/internal/types"
 )
@@ -30,10 +31,10 @@ const (
 	QueryParameters   = types.QueryParameters
 	RouterKey         = types.RouterKey
 
+	EventTypeCreateCoins   = types.EventTypeCreateCoins
 	AttributeValueCategory = types.AttributeValueCategory
 
-	AttributeKeyToChainId        = types.AttributeKeyToChainId
-	AttributeKeyToChainProxyHash = types.AttributeKeyToChainProxyHash
+	AttributeKeyToChainId = types.AttributeKeyToChainId
 
 	EventTypeBindAsset           = types.EventTypeBindAsset
 	AttributeKeySourceAssetDenom = types.AttributeKeySourceAssetDenom
@@ -45,20 +46,10 @@ const (
 	AttributeKeyToAddress   = types.AttributeKeyToAddress
 	AttributeKeyAmount      = types.AttributeKeyAmount
 
-	EventTypeCreateCrossChainTx = types.EventTypeCreateCrossChainTx
-	AttributeCrossChainId       = types.AttributeCrossChainId
-	AttributeKeyTxParamHash     = types.AttributeKeyTxParamHash
-	AttributeKeyMakeTxParam     = types.AttributeKeyMakeTxParam
-
-	EventTypeVerifyToCosmosProof                        = types.EventTypeVerifyToCosmosProof
-	AttributeKeyMerkleValueTxHash                       = types.AttributeKeyMerkleValueTxHash
-	AttributeKeyMerkleValueMakeTxParamTxHash            = types.AttributeKeyMerkleValueMakeTxParamTxHash
-	AttributeKeyMerkleValueMakeTxParamToContractAddress = types.AttributeKeyMerkleValueMakeTxParamToContractAddress
-	AttributeKeyFromChainId                             = types.AttributeKeyFromChainId
+	AttributeKeyFromChainId = types.AttributeKeyFromChainId
 
 	EventTypeUnlock              = types.EventTypeUnlock
 	AttributeKeyFromContractHash = types.AttributeKeyFromContractHash
-	AttributeKeyToAssetDenom     = types.AttributeKeyToAssetDenom
 
 	EventTypeSetRedeemScript = types.EventTypeSetRedeemScript
 	AttributeKeyRedeemKey    = types.AttributeKeyRedeemKey
@@ -71,11 +62,10 @@ var (
 	NewKeeper     = keeper.NewKeeper
 	NewQuerier    = keeper.NewQuerier
 
-	NewMsgLock                         = types.NewMsgLock
-	NewMsgCreateDenom                  = types.NewMsgCreateDenom
-	NewMsgCreateCoinAndDelegateToProxy = types.NewMsgCreateCoinAndDelegateToProxy
-	NewMsgBindAssetHash                = types.NewMsgBindAssetHash
-	NewMsgCreateCoins                  = types.NewMsgCreateCoins
+	NewMsgLock          = types.NewMsgLock
+	NewMsgCreateDenom   = types.NewMsgCreateDenom
+	NewMsgBindAssetHash = types.NewMsgBindAssetHash
+	NewMsgCreateCoins   = types.NewMsgCreateCoins
 
 	// key function
 
@@ -91,11 +81,11 @@ var (
 type (
 	Keeper = keeper.Keeper
 
-	MsgBindAssetHash                = types.MsgBindAssetHash
-	MsgLock                         = types.MsgLock
-	MsgCreateDenom                  = types.MsgCreateDenom
-	MsgCreateCoinAndDelegateToProxy = types.MsgCreateCoinAndDelegateToProxy
-	DenomInfo                       = types.DenomInfo
-	DenomCrossChainInfo             = types.DenomCrossChainInfo
-	TxArgs                          = types.TxArgs
+	MsgBindAssetHash    = types.MsgBindAssetHash
+	MsgLock             = types.MsgLock
+	MsgCreateDenom      = types.MsgCreateDenom
+	DenomInfo           = types.DenomInfo
+	DenomCrossChainInfo = types.DenomCrossChainInfo
+	TxArgs              = types.TxArgs
+	UnlockKeeper        = exported.UnlockKeeper
 )

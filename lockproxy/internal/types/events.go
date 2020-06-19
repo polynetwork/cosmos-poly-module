@@ -25,6 +25,8 @@ const (
 	AttributeKeyCreator      = "creator"
 	AttributeKeyProxyHash    = "lock_proxy_hash"
 
+	EventTypeCreateAndDelegateCoinToProxy = "create_and_delegate_coin_to_proxy"
+
 	EventTypeBindProxy           = "bind_proxy_hash"
 	AttributeKeyLockProxy        = "lock_proxy_hash"
 	AttributeKeyToChainId        = "to_chain_id"
@@ -34,7 +36,6 @@ const (
 	AttributeKeySourceAssetDenom = "source_asset_denom"
 	AttributeKeySourceAssetHash  = "source_asset_hash"
 	AttributeKeyToChainAssetHash = "to_chain_asset_hash"
-	AttributeKeyInitialAmt       = "initial_amt"
 	EventTypeLock                = "lock"
 	AttributeKeyFromAddress      = "from_address"
 	AttributeKeyToAddress        = "to_address"

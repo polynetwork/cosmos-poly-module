@@ -58,8 +58,10 @@ var (
 	GetCrossChainTxKey = keeper.GetCrossChainTxKey
 	GetDoneTxKey       = keeper.GetDoneTxKey
 	// variable aliases
-	ModuleCdc   = types.ModuleCdc
-	OperatorKey = types.OperatorKey
+	ModuleCdc                  = types.ModuleCdc
+	OperatorKey                = types.OperatorKey
+	NewQueryModuleBalanceParam = types.NewQueryModuleBalanceParam
+	QueryModuleBalance         = types.QueryModuleBalance
 )
 
 type (

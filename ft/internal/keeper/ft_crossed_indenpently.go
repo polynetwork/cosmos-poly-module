@@ -28,7 +28,7 @@ import (
 )
 
 func (k Keeper) CreateDenom(ctx sdk.Context, creator sdk.AccAddress, denom string) error {
-	if reason, exist := k.ExistDenom(ctx, denom); exist {
+	if reason, exist := k.ccmKeeper.ExistDenom(ctx, denom); exist {
 		return types.ErrCreateDenom(fmt.Sprintf("denom: %s already exist, due to reason: %s", denom, reason))
 	}
 	//k.SetOperator(ctx, denom, creator)
@@ -36,7 +36,7 @@ func (k Keeper) CreateDenom(ctx sdk.Context, creator sdk.AccAddress, denom strin
 	ctx.KVStore(k.storeKey).Set(GetIndependentCrossDenomKey(denom), []byte(denom))
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeCreateCoin,
+			types.EventTypeCreateCoins,
 			sdk.NewAttribute(types.AttributeKeySourceAssetDenom, denom),
 			sdk.NewAttribute(types.AttributeKeyCreator, creator.String()),
 		),
@@ -87,7 +87,7 @@ func (k Keeper) Lock(ctx sdk.Context, fromAddr sdk.AccAddress, sourceAssetDenom 
 		return types.ErrLock(fmt.Sprintf("toAssetHash is empty"))
 	}
 	// invoke cross_chain_manager module to construct cosmos proof
-	if err := k.ccmKeeper.CreateCrossChainTx(ctx, toChainId, []byte(sourceAssetDenom), toAssetHash, "unlock", sink.Bytes()); err != nil {
+	if err := k.ccmKeeper.CreateCrossChainTx(ctx, fromAddr, toChainId, []byte(sourceAssetDenom), toAssetHash, "unlock", sink.Bytes()); err != nil {
 		return types.ErrLock(fmt.Sprintf("ccmKeeper.CreateCrossChainTx, toChainId: %d, denom: %s, toAssetHash: %x, args: %x, Error: %s", toChainId, sourceAssetDenom, toAssetHash, args, err.Error()))
 	}
 
@@ -99,7 +99,7 @@ func (k Keeper) Lock(ctx sdk.Context, fromAddr sdk.AccAddress, sourceAssetDenom 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeLock,
-			sdk.NewAttribute(types.AttributeKeySourceAssetDenom, sourceAssetDenom),
+			sdk.NewAttribute(types.AttributeKeyFromAssetHash, hex.EncodeToString([]byte(sourceAssetDenom))),
 			sdk.NewAttribute(types.AttributeKeyToChainId, strconv.FormatUint(toChainId, 10)),
 			sdk.NewAttribute(types.AttributeKeyToChainAssetHash, hex.EncodeToString(toAssetHash)),
 			sdk.NewAttribute(types.AttributeKeyFromAddress, fromAddr.String()),
@@ -133,9 +133,7 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeUnlock,
-			sdk.NewAttribute(types.AttributeKeyFromChainId, strconv.FormatUint(fromChainId, 10)),
-			sdk.NewAttribute(types.AttributeKeyFromContractHash, hex.EncodeToString(fromContractAddr)),
-			sdk.NewAttribute(types.AttributeKeyToAssetDenom, denom),
+			sdk.NewAttribute(types.AttributeKeyToAssetHash, hex.EncodeToString([]byte(denom))),
 			sdk.NewAttribute(types.AttributeKeyToAddress, toAccAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 		),
@@ -172,16 +170,4 @@ func (k Keeper) ValidCreator(ctx sdk.Context, denom string, creator sdk.AccAddre
 	//store := ctx.KVStore(k.storeKey)
 	//return bytes.Equal(store.Get(GetDenomToOperatorKey(denom)), creator.Bytes())
 	return bytes.Equal(k.ccmKeeper.GetDenomCreator(ctx, denom), creator.Bytes())
-}
-func (k Keeper) ExistDenom(ctx sdk.Context, denom string) (string, bool) {
-	storedSupplyCoins := k.supplyKeeper.GetSupply(ctx).GetTotal()
-	//return storedSupplyCoins.AmountOf(denom) != sdk.ZeroInt() || len(k.GetOperator(ctx, denom)) != 0
-	if len(k.ccmKeeper.GetDenomCreator(ctx, denom)) != 0 {
-		return fmt.Sprintf("k.ccmKeeper.GetDenomCreator(ctx, %s) is: %x", denom, k.ccmKeeper.GetDenomCreator(ctx, denom)), true
-	}
-
-	if !storedSupplyCoins.AmountOf(denom).Equal(sdk.ZeroInt()) {
-		return fmt.Sprintf("supply.AmountOf(%s) is: %s", denom, storedSupplyCoins.AmountOf(denom).String()), true
-	}
-	return "", false
 }

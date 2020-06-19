@@ -44,22 +44,24 @@ type KeeperI interface {
 
 // Keeper of the mint store
 type Keeper struct {
-	cdc         *codec.Codec
-	storeKey    sdk.StoreKey
-	paramSpace  params.Subspace
-	hsKeeper    types.HeaderSyncKeeper
-	ulKeeperMap map[string]types.UnlockKeeper
+	cdc          *codec.Codec
+	storeKey     sdk.StoreKey
+	paramSpace   params.Subspace
+	hsKeeper     types.HeaderSyncKeeper
+	supplyKeeper types.SupplyKeeper
+	ulKeeperMap  map[string]types.UnlockKeeper
 }
 
 // NewKeeper creates a new mint Keeper instance
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, paramSpace params.Subspace, hsk types.HeaderSyncKeeper, ulKeeperMap map[string]types.UnlockKeeper) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, paramSpace params.Subspace, hsk types.HeaderSyncKeeper, supplyKeeper types.SupplyKeeper) Keeper {
 
 	return Keeper{
-		cdc:         cdc,
-		storeKey:    key,
-		paramSpace:  paramSpace.WithKeyTable(types.ParamKeyTable()),
-		hsKeeper:    hsk,
-		ulKeeperMap: ulKeeperMap,
+		cdc:          cdc,
+		storeKey:     key,
+		paramSpace:   paramSpace.WithKeyTable(types.ParamKeyTable()),
+		hsKeeper:     hsk,
+		supplyKeeper: supplyKeeper,
+		ulKeeperMap:  nil,
 	}
 }
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -106,7 +108,28 @@ func (k Keeper) GetDenomCreator(ctx sdk.Context, denom string) sdk.AccAddress {
 	return ctx.KVStore(k.storeKey).Get(GetDenomToCreatorKey(denom))
 }
 
-func (k Keeper) CreateCrossChainTx(ctx sdk.Context, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error {
+func (k Keeper) ExistDenom(ctx sdk.Context, denom string) (string, bool) {
+	storedSupplyCoins := k.supplyKeeper.GetSupply(ctx).GetTotal()
+	//return storedSupplyCoins.AmountOf(denom) != sdk.ZeroInt() || len(k.GetOperator(ctx, denom)) != 0
+	if len(k.GetDenomCreator(ctx, denom)) != 0 {
+		return fmt.Sprintf("ccmKeeper.GetDenomCreator(ctx,%s) is %s", denom, sdk.AccAddress(k.GetDenomCreator(ctx, denom)).String()), true
+	}
+	if !storedSupplyCoins.AmountOf(denom).Equal(sdk.ZeroInt()) {
+		return fmt.Sprintf("supply.AmountOf(%s) is %s", denom, storedSupplyCoins.AmountOf(denom).String()), true
+	}
+	return "", false
+}
+
+func (k Keeper) GetModuleBalance(ctx sdk.Context, moduleName string) (sdk.Coins, error) {
+	//	ensure the passed-in initialAmt is equal to the balance of lockproxy module account
+	moduleAcct := k.supplyKeeper.GetModuleAccount(ctx, moduleName)
+	if moduleAcct == nil {
+		return nil, types.ErrGetModuleBalance(fmt.Sprintf("Module: %s account doesnot exist"))
+	}
+	return moduleAcct.GetCoins(), nil
+}
+
+func (k Keeper) CreateCrossChainTx(ctx sdk.Context, fromAddr sdk.AccAddress, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error {
 	crossChainId, err := k.getCrossChainId(ctx)
 	if err != nil {
 		return err
@@ -115,9 +138,9 @@ func (k Keeper) CreateCrossChainTx(ctx sdk.Context, toChainId uint64, fromContra
 		return err
 	}
 
-	var ttx ttype.Tx
+	ttx := make([]byte, len(ctx.TxBytes()))
 	copy(ttx, ctx.TxBytes())
-	txHash := ttx.Hash()
+	txHash := ttype.Tx(ttx).Hash()
 	crossChainIdBs := crossChainId.BigInt().Bytes()
 	txParam := ccmc.MakeTxParam{
 		TxHash:              txHash,
@@ -142,6 +165,9 @@ func (k Keeper) CreateCrossChainTx(ctx sdk.Context, toChainId uint64, fromContra
 			sdk.NewAttribute(types.AttributeKeyStatus, "1"),
 			sdk.NewAttribute(types.AttributeCrossChainId, crossChainId.String()),
 			sdk.NewAttribute(types.AttributeKeyTxParamHash, hex.EncodeToString(txParamHash)),
+			sdk.NewAttribute(types.AttributeKeyFromAddress, fromAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyFromContract, hex.EncodeToString(fromContractHash)),
+			sdk.NewAttribute(types.AttributeKeyToChainId, strconv.FormatUint(toChainId, 10)),
 			sdk.NewAttribute(types.AttributeKeyMakeTxParam, hex.EncodeToString(sink.Bytes())),
 		),
 	})
@@ -170,7 +196,7 @@ func (k Keeper) ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, height 
 		return types.ErrProcessCrossChainTx(fmt.Sprintf("Decode proof hex string to bytes, Error: %s", e.Error()))
 	}
 
-	merkleValue, err := k.VerifyToCosmosTx(ctx, proof, fromChainId, storedHeader)
+	merkleValue, err := k.VerifyToCosmosTx(ctx, proof, storedHeader)
 	if err != nil {
 		return types.ErrProcessCrossChainTx(fmt.Sprintf("VerifyToCosmostx failed, %s", err.Error()))
 	}
@@ -196,7 +222,7 @@ func (k Keeper) ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, height 
 	return types.ErrProcessCrossChainTx(fmt.Sprintf("Cannot find any unlock keeper to perform 'unlock' method for toContractAddr:%x, fromChainId:%d", merkleValue.MakeTxParam.ToContractAddress, fromChainId))
 }
 
-func (k Keeper) VerifyToCosmosTx(ctx sdk.Context, proof []byte, fromChainId uint64, header *polytype.Header) (*ccmc.ToMerkleValue, error) {
+func (k Keeper) VerifyToCosmosTx(ctx sdk.Context, proof []byte, header *polytype.Header) (*ccmc.ToMerkleValue, error) {
 	value, err := merkle.MerkleProve(proof, header.CrossStateRoot[:])
 	if err != nil {
 		return nil, types.ErrVerifyToCosmosTx(fmt.Sprintf("merkle.MerkleProve verify failed, Error: %s", err.Error()))
@@ -207,18 +233,18 @@ func (k Keeper) VerifyToCosmosTx(ctx sdk.Context, proof []byte, fromChainId uint
 		return nil, types.ErrVerifyToCosmosTx(fmt.Sprintf("ToMerkeValue Deserialization Error: %s", err.Error()))
 	}
 
-	if err := k.checkDoneTx(ctx, fromChainId, merkleValue.MakeTxParam.CrossChainID); err != nil {
+	if err := k.checkDoneTx(ctx, merkleValue.FromChainID, merkleValue.MakeTxParam.CrossChainID); err != nil {
 		return nil, types.ErrVerifyToCosmosTx(fmt.Sprintf("check if this tx has been done, Error: %s", err.Error()))
 	}
 
-	k.putDoneTx(ctx, fromChainId, merkleValue.MakeTxParam.CrossChainID)
+	k.putDoneTx(ctx, merkleValue.FromChainID, merkleValue.MakeTxParam.CrossChainID)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeVerifyToCosmosProof,
 			sdk.NewAttribute(types.AttributeKeyMerkleValueTxHash, hex.EncodeToString(merkleValue.TxHash)),
 			sdk.NewAttribute(types.AttributeKeyMerkleValueMakeTxParamTxHash, hex.EncodeToString(merkleValue.MakeTxParam.TxHash)),
-			sdk.NewAttribute(types.AttributeKeyFromChainId, strconv.FormatUint(fromChainId, 10)),
+			sdk.NewAttribute(types.AttributeKeyFromChainId, strconv.FormatUint(merkleValue.FromChainID, 10)),
 			sdk.NewAttribute(types.AttributeKeyMerkleValueMakeTxParamToContractAddress, hex.EncodeToString(merkleValue.MakeTxParam.ToContractAddress)),
 		),
 	})

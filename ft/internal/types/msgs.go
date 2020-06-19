@@ -26,55 +26,10 @@ import (
 
 // Governance message types and routes
 const (
-	TypeMsgCreateCoinAndDelegateToProxy = "create_delegate_to_proxy"
-	TypeMsgCreateDenom                  = "create_denom"
-
-	TypeMsgBindProxyHash       = "bind_proxy_hash"
-	TypeMsgBindAssetHash       = "bind_asset_hash"
-	TypeMsgLock                = "lock"
-	TypeMsgProcessCrossChainTx = "process_cross_chain_tx"
+	TypeMsgCreateDenom   = "create_denom"
+	TypeMsgBindAssetHash = "bind_asset_hash"
+	TypeMsgLock          = "lock"
 )
-
-// MsgSend - high level transaction of the coin module
-type MsgCreateCoinAndDelegateToProxy struct {
-	Creator       sdk.AccAddress
-	Coin          sdk.Coin
-	LockProxyHash []byte
-}
-
-var _ sdk.Msg = MsgCreateCoinAndDelegateToProxy{}
-
-// NewMsgSend - construct arbitrary multi-in, multi-out send msg.
-func NewMsgCreateCoinAndDelegateToProxy(creator sdk.AccAddress, coin sdk.Coin, lockProxyHash []byte) MsgCreateCoinAndDelegateToProxy {
-	return MsgCreateCoinAndDelegateToProxy{Creator: creator, Coin: coin, LockProxyHash: lockProxyHash}
-}
-
-// Route Implements Msg.
-func (msg MsgCreateCoinAndDelegateToProxy) Route() string { return RouterKey }
-
-// Type Implements Msg.
-func (msg MsgCreateCoinAndDelegateToProxy) Type() string { return TypeMsgCreateCoinAndDelegateToProxy }
-
-// ValidateBasic Implements Msg.
-func (msg MsgCreateCoinAndDelegateToProxy) ValidateBasic() error {
-	if msg.Creator.Empty() {
-		return sdkerrors.ErrInvalidAddress
-	}
-	if !msg.Coin.IsValid() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Coin.String())
-	}
-	return nil
-}
-
-// GetSigners Implements Msg.
-func (msg MsgCreateCoinAndDelegateToProxy) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Creator}
-}
-
-// GetSignBytes Implements Msg.
-func (msg MsgCreateCoinAndDelegateToProxy) GetSignBytes() []byte {
-	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-}
 
 type MsgCreateDenom struct {
 	Creator sdk.AccAddress

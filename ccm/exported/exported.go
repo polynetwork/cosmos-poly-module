@@ -23,6 +23,8 @@ import (
 
 // DelegationI delegation bond for a delegated proof of stake system
 type CCMKeeper interface {
-	ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, height uint32, proofStr string, headerBs []byte) error
-	CreateCrossChainTx(ctx sdk.Context, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
+	CreateCrossChainTx(ctx sdk.Context, fromAddr sdk.AccAddress, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
+	SetDenomCreator(ctx sdk.Context, denom string, creator sdk.AccAddress)
+	GetDenomCreator(ctx sdk.Context, denom string) sdk.AccAddress
+	ExistDenom(ctx sdk.Context, denom string) (string, bool)
 }

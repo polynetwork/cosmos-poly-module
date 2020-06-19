@@ -263,14 +263,15 @@ func NewSimApp(
 	)
 
 	app.HeaderSyncKeeper = headersync.NewKeeper(app.cdc, keys[headersync.StoreKey])
-	app.CcmKeeper = ccm.NewKeeper(app.cdc, keys[ccm.StoreKey], app.subspaces[ccm.ModuleName], app.HeaderSyncKeeper, map[string]ccm.UnlockKeeper{
+	app.CcmKeeper = ccm.NewKeeper(app.cdc, keys[ccm.StoreKey], app.subspaces[ccm.ModuleName], app.HeaderSyncKeeper, app.SupplyKeeper)
+	app.BtcxKeeper = btcx.NewKeeper(app.cdc, keys[btcx.StoreKey], app.AccountKeeper, app.BankKeeper, app.SupplyKeeper, app.CcmKeeper)
+	app.LockProxyKeeper = lockproxy.NewKeeper(app.cdc, keys[lockproxy.StoreKey], app.AccountKeeper, app.SupplyKeeper, app.CcmKeeper)
+	app.FtKeeper = ft.NewKeeper(app.cdc, keys[ft.StoreKey], app.AccountKeeper, app.BankKeeper, app.SupplyKeeper, app.CcmKeeper)
+	app.CcmKeeper.MountUnlockKeeperMap(map[string]ccm.UnlockKeeper{
 		btcx.StoreKey:      app.BtcxKeeper,
 		ft.StoreKey:        app.FtKeeper,
 		lockproxy.StoreKey: app.LockProxyKeeper,
 	})
-	app.BtcxKeeper = btcx.NewKeeper(app.cdc, keys[btcx.StoreKey], app.AccountKeeper, app.BankKeeper, app.SupplyKeeper, app.CcmKeeper)
-	app.LockProxyKeeper = lockproxy.NewKeeper(app.cdc, keys[lockproxy.StoreKey], app.AccountKeeper, app.SupplyKeeper, app.CcmKeeper)
-	app.FtKeeper = ft.NewKeeper(app.cdc, keys[ft.StoreKey], app.AccountKeeper, app.BankKeeper, app.SupplyKeeper, app.LockProxyKeeper, app.CcmKeeper)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

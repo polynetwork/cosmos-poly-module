@@ -24,26 +24,23 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/supply/exported"
 	"github.com/polynetwork/cosmos-poly-module/ft/internal/types"
-	selfexported "github.com/polynetwork/cosmos-poly-module/lockproxy/exported"
 	"github.com/tendermint/tendermint/libs/log"
 )
 
 // Keeper of the mint store
 type Keeper struct {
-	cdc             *codec.Codec
-	storeKey        sdk.StoreKey
-	paramSpace      params.Subspace
-	authKeeper      types.AccountKeeper
-	bankKeeper      types.BankKeeper
-	supplyKeeper    types.SupplyKeeper
-	ccmKeeper       types.CrossChainManager
-	lockProxyKeeper types.LockProxyKeeper
-	selfexported.UnlockKeeper
+	cdc          *codec.Codec
+	storeKey     sdk.StoreKey
+	paramSpace   params.Subspace
+	authKeeper   types.AccountKeeper
+	bankKeeper   types.BankKeeper
+	supplyKeeper types.SupplyKeeper
+	ccmKeeper    types.CrossChainManager
 }
 
 // NewKeeper creates a new mint Keeper instance
 func NewKeeper(
-	cdc *codec.Codec, key sdk.StoreKey, ak types.AccountKeeper, bankKeeper types.BankKeeper, supplyKeeper types.SupplyKeeper, lockProxyKeeper types.LockProxyKeeper, ccmKeeper types.CrossChainManager) Keeper {
+	cdc *codec.Codec, key sdk.StoreKey, ak types.AccountKeeper, bankKeeper types.BankKeeper, supplyKeeper types.SupplyKeeper, ccmKeeper types.CrossChainManager) Keeper {
 
 	// ensure mint module account is set
 	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr == nil {
@@ -51,13 +48,12 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:             cdc,
-		storeKey:        key,
-		authKeeper:      ak,
-		bankKeeper:      bankKeeper,
-		supplyKeeper:    supplyKeeper,
-		lockProxyKeeper: lockProxyKeeper,
-		ccmKeeper:       ccmKeeper,
+		cdc:          cdc,
+		storeKey:     key,
+		authKeeper:   ak,
+		bankKeeper:   bankKeeper,
+		supplyKeeper: supplyKeeper,
+		ccmKeeper:    ccmKeeper,
 	}
 }
 
@@ -80,7 +76,7 @@ func (k Keeper) EnsureAccountExist(ctx sdk.Context, addr sdk.AccAddress) error {
 
 func (k Keeper) CreateCoins(ctx sdk.Context, creator sdk.AccAddress, coins sdk.Coins) error {
 	for _, coin := range coins {
-		if reason, exist := k.ExistDenom(ctx, coin.Denom); exist {
+		if reason, exist := k.ccmKeeper.ExistDenom(ctx, coin.Denom); exist {
 			return types.ErrCreateCoins(fmt.Sprintf("denom:%s already exist, due to reason:%s", coin.Denom, reason))
 		}
 		k.ccmKeeper.SetDenomCreator(ctx, coin.Denom, creator)
@@ -90,7 +86,7 @@ func (k Keeper) CreateCoins(ctx sdk.Context, creator sdk.AccAddress, coins sdk.C
 	}
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeCreateAndDelegateCoinToProxy,
+			types.EventTypeCreateCoins,
 			sdk.NewAttribute(types.AttributeKeyCreator, creator.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, coins.String()),
 		),

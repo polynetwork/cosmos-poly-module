@@ -20,6 +20,7 @@ package cli
 import (
 	"bufio"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 	"strings"
@@ -47,8 +48,8 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	txCmd.AddCommand(flags.PostCommands(
-
 		SendCreateLockProxyTxCmd(cdc),
+		SendCreateCoinAndDelegateToProxyTxCmd(cdc),
 		SendBindProxyHashTxCmd(cdc),
 		SendBindAssetHashTxCmd(cdc),
 		SendLockTxCmd(cdc),
@@ -75,6 +76,51 @@ $ %s tx %s create-lock-proxy cosmos1ayc6faczpj42eu7wjsjkwcj7h0q2p2e4vrlkzf
 			cliCtx := context.NewCLIContextWithFrom(args[0]).WithCodec(cdc)
 
 			msg := types.NewMsgCreateLockProxy(cliCtx.GetFromAddress())
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+	return cmd
+}
+
+func SendCreateCoinAndDelegateToProxyTxCmd(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create-coin-delegate [creator] [coin] [lock_proxy_hash/lock_proxy_creator]",
+		Short: "Create coin by creator, and immediately delegate to the lock proxy module account",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`
+Example:
+$ %s tx %s create-coin-delegate cosmos1lzk4nch5v2snduup2uujpud9j6gqeunqarx2d9 1000mst1, e931a4f7020caaacf3ce942567625ebbc0a0ab35
+Or 
+$ $ %s tx %s create-coin-delegate cosmos1lzk4nch5v2snduup2uujpud9j6gqeunqarx2d9 1000mst1, cosmos1ayc6faczpj42eu7wjsjkwcj7h0q2p2e4vrlkzf
+`,
+				version.ClientName, types.ModuleName, version.ClientName, types.ModuleName,
+			),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			inBuf := bufio.NewReader(cmd.InOrStdin())
+			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			creator, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			coin, err := sdk.ParseCoin(args[1])
+			if err != nil {
+				return err
+			}
+
+			lockProxy, err := hex.DecodeString(args[2])
+			if err != nil {
+				lockProxyBs, err1 := sdk.AccAddressFromBech32(args[2])
+				if err1 != nil {
+					return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("lockproxy: %s or operator from hex or from Bech32 Error: %s", err, err1))
+				}
+				lockProxy = append(lockProxy, lockProxyBs...)
+			}
+			msg := types.NewMsgCreateCoinAndDelegateToProxy(creator, coin, sdk.AccAddress(lockProxy))
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
@@ -125,7 +171,7 @@ $ %s tx %s bind-proxy-hash 3 0x11223344556677889900
 
 func SendBindAssetHashTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "bind-asset-hash [source_asset_denom] [to_chainId] [to_asset_hash] [initial_balance_of_lockproxy_module_acct_for_asset_denom]",
+		Use:   "bind-asset-hash [source_asset_denom] [to_chainId] [to_asset_hash]",
 		Short: "bind asset hash by the operator, ",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
@@ -157,13 +203,8 @@ $ %s tx %s bind-asset-hash ont 3 00000000000000000001 100000
 				return fmt.Errorf("decode hex string 'targetProxyHash' error:%v", err)
 			}
 
-			limitBigInt, ok := big.NewInt(0).SetString(args[3], 10)
-			if !ok {
-				return fmt.Errorf("read limit as big int from args[3] failed")
-			}
-			initialAmt := sdk.NewIntFromBigInt(limitBigInt)
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgBindAssetHash(cliCtx.GetFromAddress(), sourceAssetDenom, toChainId, toAssetHash, initialAmt)
+			msg := types.NewMsgBindAssetHash(cliCtx.GetFromAddress(), sourceAssetDenom, toChainId, toAssetHash)
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}

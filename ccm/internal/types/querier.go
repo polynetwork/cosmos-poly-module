@@ -21,6 +21,10 @@ import (
 	"fmt"
 )
 
+const (
+	QueryModuleBalance = "module_balance"
+)
+
 // QueryBalanceParams defines the params for querying an account balance.
 type QueryContainToContractParam struct {
 	KeyStore       string
@@ -51,4 +55,12 @@ type QueryCcmParams struct {
 
 func NewQueryCcmParams() QueryCcmParams {
 	return QueryCcmParams{}
+}
+
+type QueryModuleBalanceParam struct {
+	ModuleName string
+}
+
+func NewQueryModuleBalanceParam(moduleName string) QueryModuleBalanceParam {
+	return QueryModuleBalanceParam{ModuleName: moduleName}
 }

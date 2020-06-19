@@ -25,7 +25,6 @@ const (
 	QueryProxyByOperator = "query_proxy_by_operator"
 	QueryProxyHash       = "proxy_hash"
 	QueryAssetHash       = "asset_hash"
-	QueryLockedAmt       = "locked_amount"
 )
 
 // QueryBalanceParams defines the params for querying an account balance.
@@ -57,12 +56,4 @@ type QueryAssetHashParam struct {
 
 func NewQueryAssetHashParam(lockProxyHash []byte, sourceAssetDenom string, chainId uint64) QueryAssetHashParam {
 	return QueryAssetHashParam{LockProxyHash: lockProxyHash, SourceAssetDenom: sourceAssetDenom, ChainId: chainId}
-}
-
-type QueryLockedAmtParam struct {
-	SourceAssetDenom string
-}
-
-func NewQueryLockedAmtParam(sourceAssetDenom string) QueryLockedAmtParam {
-	return QueryLockedAmtParam{SourceAssetDenom: sourceAssetDenom}
 }

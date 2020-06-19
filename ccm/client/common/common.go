@@ -40,3 +40,12 @@ func QueryParams(cliCtx context.CLIContext, queryRoute string) ([]byte, error) {
 	)
 	return res, err
 }
+
+func QueryModuleBalance(cliCtx context.CLIContext, queryRoute string, moduleName string) ([]byte, error) {
+
+	res, _, err := cliCtx.QueryWithData(
+		fmt.Sprintf("custom/%s/%s", queryRoute, types.NewQueryModuleBalanceParam(moduleName)),
+		nil,
+	)
+	return res, err
+}

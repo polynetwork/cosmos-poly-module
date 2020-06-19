@@ -47,11 +47,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, queryRoute st
 		queryAssetHashHandlerFn(cliCtx, queryRoute),
 	).Methods("GET")
 
-	r.HandleFunc(
-		fmt.Sprintf("/lockproxy/locked_amount/{%s}", AssetDenom),
-		queryLockedAmtHandlerFn(cliCtx, queryRoute),
-	).Methods("GET")
-
 }
 
 func queryProxyHashByOperatorHandlerFn(cliCtx context.CLIContext, queryRoute string) http.HandlerFunc {
@@ -157,33 +152,6 @@ func checkResponseQueryAssetHashResponse(
 	w http.ResponseWriter, cliCtx context.CLIContext, queryRoute string, lockproxy []byte, denom string, chainId uint64) (res []byte, ok bool) {
 
 	res, err := common.QueryAssetHash(cliCtx, queryRoute, lockproxy, denom, chainId)
-	if err != nil {
-		rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-		return nil, false
-	}
-
-	return res, true
-}
-
-func queryLockedAmtHandlerFn(cliCtx context.CLIContext, queryRoute string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-		res, ok := checkResponseQueryLockedAmtResponse(w, cliCtx, queryRoute, mux.Vars(r)[AssetDenom])
-		if !ok {
-			return
-		}
-
-		rest.PostProcessResponse(w, cliCtx, res)
-	}
-}
-
-func checkResponseQueryLockedAmtResponse(
-	w http.ResponseWriter, cliCtx context.CLIContext, queryRoute string, denom string) (res []byte, ok bool) {
-
-	res, err := common.QueryLockedAmt(cliCtx, queryRoute, denom)
 	if err != nil {
 		rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return nil, false

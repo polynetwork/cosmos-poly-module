@@ -25,6 +25,7 @@ import (
 
 const (
 	Operator        = "operator"
+	Coin            = "coin"
 	LockProxyHash   = "lock_proxy_hash"
 	ToChainId       = "to_chain_id"
 	AssetDenom      = "asset_denom"

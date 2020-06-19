@@ -37,8 +37,6 @@ func NewQuerier(k Keeper) sdk.Querier {
 			return queryProxyHash(ctx, req, k)
 		case types.QueryAssetHash:
 			return queryAssetHash(ctx, req, k)
-		case types.QueryLockedAmt:
-			return queryLockedAmount(ctx, req, k)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown query path: %s", path[0])
 		}
@@ -91,22 +89,6 @@ func queryAssetHash(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, e
 	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, assetHashBs)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONMarshal, "could not marshal toChain assetHash: %x of denom: %s and chainId: %d in lockProxy: %x to JSON", assetHashBs, params.SourceAssetDenom, params.ChainId, params.LockProxyHash)
-	}
-
-	return bz, nil
-}
-
-func queryLockedAmount(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
-	var params types.QueryLockedAmtParam
-
-	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONUnmarshal, "failed to parse params: %s", err)
-	}
-	lockedAmt := k.GetLockedAmount(ctx, params.SourceAssetDenom)
-
-	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, lockedAmt)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONMarshal, "could not marshal lockedAmt: %s of denom: %s to JSON", lockedAmt, params.SourceAssetDenom)
 	}
 
 	return bz, nil

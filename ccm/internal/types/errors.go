@@ -32,6 +32,7 @@ var (
 
 	ErrMsgProcessCrossChainTxType = sdkerrors.Register(ModuleName, 5, "ErrMsgProcessCrossChainTxType")
 	ErrMsgCreateCrossChainTxType  = sdkerrors.Register(ModuleName, 6, "ErrMsgCreateCrossChainTxType")
+	ErrGetModuleBalanceType       = sdkerrors.Register(ModuleName, 7, "ErrGetModuleBalanceType")
 )
 
 func ErrMarshalSpecificTypeFail(o interface{}, err error) error {
@@ -55,4 +56,8 @@ func ErrMsgProcessCrossChainTx(reason string) error {
 
 func ErrMsgCreateCrossChainTx(reason string) error {
 	return sdkerrors.Wrapf(ErrMsgCreateCrossChainTxType, "Reason: %s", reason)
+}
+
+func ErrGetModuleBalance(reason string) error {
+	return sdkerrors.Wrapf(ErrGetModuleBalanceType, "Reason: %s", reason)
 }

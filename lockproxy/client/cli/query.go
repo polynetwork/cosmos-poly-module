@@ -51,7 +51,6 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 			GetCmdQueryProxyByOperator(queryRoute, cdc),
 			GetCmdQueryProxyHash(queryRoute, cdc),
 			GetCmdQueryAssetHash(queryRoute, cdc),
-			GetCmdQueryLockedAmount(queryRoute, cdc),
 		)...,
 	)
 
@@ -185,35 +184,6 @@ $ %s query %s proxy-hash cosmos1ayc6faczpj42eu7wjsjkwcj7h0q2p2e4vrlkzf stake 2
 			var assetHash []byte
 			cdc.MustUnmarshalJSON(res, &assetHash)
 			fmt.Printf("asset_hash: %s\n", hex.EncodeToString(assetHash))
-			//return cliCtx.PrintOutput(hex.EncodeToString(proxyHash))
-			return nil
-		},
-	}
-}
-
-func GetCmdQueryLockedAmount(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use: "locked-amount [denom]",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query the asset locked amount in chainId chain corresponding with soureAssetDenom
-Example:
-$ %s query %s locked-amount stake
-`,
-				version.ClientName, types.ModuleName,
-			),
-		),
-		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			sourceAssetdenom := args[0]
-
-			res, err := common.QueryLockedAmt(cliCtx, queryRoute, sourceAssetdenom)
-			if err != nil {
-				return err
-			}
-			var crossedLimit sdk.Int
-			cdc.MustUnmarshalJSON(res, &crossedLimit)
-			fmt.Printf("locked_amount for%s : %s\n", sourceAssetdenom, crossedLimit.String())
 			//return cliCtx.PrintOutput(hex.EncodeToString(proxyHash))
 			return nil
 		},

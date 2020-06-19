@@ -24,6 +24,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/polynetwork/cosmos-poly-module/ccm/client/common"
 	"github.com/polynetwork/cosmos-poly-module/ccm/internal/types"
@@ -46,6 +47,7 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 		flags.GetCommands(
 			GetCmdQueryIfContainContract(queryRoute, cdc),
 			GetCmdQueryCcmParams(queryRoute, cdc),
+			GetCmdQueryModuleBalance(queryRoute, cdc),
 		)...,
 	)
 
@@ -110,6 +112,35 @@ $ %s query %s parameters
 				return err
 			}
 			fmt.Printf("Paramters res is:\n %s\n", params.String())
+			return nil
+		},
+	}
+}
+
+func GetCmdQueryModuleBalance(queryRoute string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use: "module-balance [module_name]",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query the module account balance
+Example:
+$ %s query %s module-balance lockproxy
+`,
+				version.ClientName, types.ModuleName,
+			),
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			moduleName := args[0]
+
+			res, err := common.QueryModuleBalance(cliCtx, queryRoute, moduleName)
+			if err != nil {
+				return err
+			}
+			var balance sdk.Coins
+			cdc.MustUnmarshalJSON(res, &balance)
+			fmt.Printf("module balance of module: %s is : %s\n", moduleName, balance.String())
+			//return cliCtx.PrintOutput(hex.EncodeToString(proxyHash))
 			return nil
 		},
 	}

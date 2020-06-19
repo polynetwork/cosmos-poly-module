@@ -49,10 +49,6 @@ type SupplyKeeper interface {
 	GetSupply(ctx sdk.Context) (supply exported.SupplyI)
 }
 
-type SupplyI interface {
-	SetTotal(total sdk.Coins) SupplyI
-}
-
 type BankKeeper interface {
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 	DelegateCoins(ctx sdk.Context, fromAdd, toAddr sdk.AccAddress, amt sdk.Coins) error
@@ -63,8 +59,8 @@ type BankKeeper interface {
 }
 
 type CCMKeeper interface {
-	ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, height uint32, proofStr string, headerBs []byte) error
-	CreateCrossChainTx(ctx sdk.Context, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
+	CreateCrossChainTx(ctx sdk.Context, fromAddr sdk.AccAddress, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
 	SetDenomCreator(ctx sdk.Context, denom string, creator sdk.AccAddress)
 	GetDenomCreator(ctx sdk.Context, denom string) sdk.AccAddress
+	ExistDenom(ctx sdk.Context, denom string) (string, bool)
 }

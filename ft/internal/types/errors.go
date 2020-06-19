@@ -26,18 +26,17 @@ import (
 var (
 	ErrInvalidChainIdType = sdkerrors.Register(ModuleName, 1, "ErrInvalidChainIdType")
 
-	ErrMsgBindAssetHashType             = sdkerrors.Register(ModuleName, 2, "ErrMsgBindAssetHashType")
-	ErrBindAssetHashType                = sdkerrors.Register(ModuleName, 3, "ErrBindAssetHashType")
-	ErrAccountNotExistType              = sdkerrors.Register(ModuleName, 4, "ErrAccountNotExistType")
-	ErrCreateCoinsType                  = sdkerrors.Register(ModuleName, 5, "ErrCreateCoinsType")
-	ErrCreateCoinAndDelegateToProxyType = sdkerrors.Register(ModuleName, 6, "ErrCreateCoinAndDelegateToProxyType")
-	ErrMsgCreateDenomType               = sdkerrors.Register(ModuleName, 7, "ErrMsgCreateDenomType")
-	ErrCreateDenomType                  = sdkerrors.Register(ModuleName, 8, "ErrCreateDenomType")
-	ErrBurnCoinsType                    = sdkerrors.Register(ModuleName, 9, "ErrBurnCoinsType")
-	ErrMintCoinsType                    = sdkerrors.Register(ModuleName, 10, "ErrMintCoinsType")
-	ErrMsgLockType                      = sdkerrors.Register(ModuleName, 11, "ErrMsgLockType")
-	ErrLockType                         = sdkerrors.Register(ModuleName, 12, "ErrLockType")
-	ErrUnLockType                       = sdkerrors.Register(ModuleName, 13, "ErrUnLockType")
+	ErrMsgBindAssetHashType = sdkerrors.Register(ModuleName, 2, "ErrMsgBindAssetHashType")
+	ErrBindAssetHashType    = sdkerrors.Register(ModuleName, 3, "ErrBindAssetHashType")
+	ErrAccountNotExistType  = sdkerrors.Register(ModuleName, 4, "ErrAccountNotExistType")
+	ErrCreateCoinsType      = sdkerrors.Register(ModuleName, 5, "ErrCreateCoinsType")
+	ErrMsgCreateDenomType   = sdkerrors.Register(ModuleName, 7, "ErrMsgCreateDenomType")
+	ErrCreateDenomType      = sdkerrors.Register(ModuleName, 8, "ErrCreateDenomType")
+	ErrBurnCoinsType        = sdkerrors.Register(ModuleName, 9, "ErrBurnCoinsType")
+	ErrMintCoinsType        = sdkerrors.Register(ModuleName, 10, "ErrMintCoinsType")
+	ErrMsgLockType          = sdkerrors.Register(ModuleName, 11, "ErrMsgLockType")
+	ErrLockType             = sdkerrors.Register(ModuleName, 12, "ErrLockType")
+	ErrUnLockType           = sdkerrors.Register(ModuleName, 13, "ErrUnLockType")
 )
 
 func ErrInvalidChainId(chainId uint64) error {
@@ -65,10 +64,6 @@ func ErrMsgCreateDenom(reason string) error {
 }
 func ErrCreateDenom(reason string) error {
 	return sdkerrors.Wrapf(ErrCreateDenomType, fmt.Sprintf("Reason: %s", reason))
-}
-
-func ErrCreateCoinAndDelegateToProxy(reason string) error {
-	return sdkerrors.Wrapf(ErrCreateCoinAndDelegateToProxyType, fmt.Sprintf("Reason: %s", reason))
 }
 
 func ErrMsgLock(reason string) error {

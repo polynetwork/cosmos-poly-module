@@ -24,11 +24,9 @@ import (
 )
 
 const (
-	Denom         = "denom"
-	Coin          = "coin"
-	Coins         = "coins"
-	LockProxyHash = "lock_proxy_hash"
-	ChainId       = "chain_id"
+	Denom   = "denom"
+	Coins   = "coins"
+	ChainId = "chain_id"
 )
 
 // RegisterRoutes registers minting module REST handlers on the provided router.

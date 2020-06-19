@@ -54,20 +54,13 @@ type BankKeeper interface {
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 	DelegateCoins(ctx sdk.Context, fromAdd, toAddr sdk.AccAddress, amt sdk.Coins) error
 	UndelegateCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error
-
 	SubtractCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, error)
 	AddCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.Coins) (sdk.Coins, error)
 }
 
-type SupplyI interface {
-	SetTotal(total sdk.Coins) SupplyI
-}
 type CrossChainManager interface {
-	CreateCrossChainTx(ctx sdk.Context, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
+	CreateCrossChainTx(ctx sdk.Context, fromAddr sdk.AccAddress, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
 	SetDenomCreator(ctx sdk.Context, denom string, creator sdk.AccAddress)
 	GetDenomCreator(ctx sdk.Context, denom string) sdk.AccAddress
-}
-
-type LockProxyKeeper interface {
-	EnsureLockProxyExist(ctx sdk.Context, creator sdk.AccAddress) bool
+	ExistDenom(ctx sdk.Context, denom string) (string, bool)
 }
