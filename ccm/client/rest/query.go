@@ -40,6 +40,11 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router, queryRoute st
 		fmt.Sprintf("/ccm/parameters"),
 		queryParams(cliCtx, queryRoute),
 	).Methods("GET")
+
+	r.HandleFunc(
+		fmt.Sprintf("/ccm/module_balance/{%s}", ModuleName),
+		queryModuleBalance(cliCtx, queryRoute),
+	).Methods("GET")
 }
 
 func queryIfContainContract(cliCtx context.CLIContext, queryRoute string) http.HandlerFunc {
@@ -107,4 +112,20 @@ func checkResponseQueryParamsResponse(
 	}
 
 	return res, true
+}
+
+func queryModuleBalance(cliCtx context.CLIContext, queryRoute string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+		vars := mux.Vars(r)
+		res, err := common.QueryModuleBalance(cliCtx, queryRoute, vars[ModuleName])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
 }

@@ -27,6 +27,7 @@ const (
 	ModuleStoreKey = "module_store_key"
 	ToContract     = "to_contract"
 	FromChainId    = "from_chain_id"
+	ModuleName     = "module_name"
 )
 
 // RegisterRoutes registers minting module REST handlers on the provided router.

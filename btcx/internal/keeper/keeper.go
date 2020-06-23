@@ -68,7 +68,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 func (k Keeper) CreateDenom(ctx sdk.Context, creator sdk.AccAddress, denom string, redeemScript string) error {
-	if reason, exist := k.ExistDenom(ctx, denom); exist {
+	if reason, exist := k.ccmKeeper.ExistDenom(ctx, denom); exist {
 		return types.ErrCreateDenom(fmt.Sprintf("denom:%s already exist, due to reason:%s", denom, reason))
 	}
 	k.ccmKeeper.SetDenomCreator(ctx, denom, creator)
@@ -83,10 +83,6 @@ func (k Keeper) CreateDenom(ctx sdk.Context, creator sdk.AccAddress, denom strin
 	scriptHashBs := btcutil.Hash160(redeemScriptBs)
 	store.Set(GetCreatorDenomToScriptHashKey(creator, denom), scriptHashBs)
 	store.Set(GetScriptHashToRedeemScript(scriptHashBs), redeemScriptBs)
-
-	//store.Set(GetCreatorDenomToScriptHashKey(creator, denom), scriptHashKeyBs)
-	//store.Set(GetScriptHashToDenomKey(scriptHashKeyBs), []byte(denom))
-	//store.Set(GetScriptHashToRedeemScript(scriptHashKeyBs), redeemScriptBs)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -106,12 +102,6 @@ func (k Keeper) BindAssetHash(ctx sdk.Context, creator sdk.AccAddress, sourceAss
 	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set(GetBindAssetHashKey([]byte(sourceAssetDenom), toChainId), toAssetHash)
-	//// for lock usage
-	//scriptHash := store.Get(GetCreatorDenomToScriptHashKey(creator, sourceAssetDenom))
-	//// for unlock usage
-	//store.Set(GetScriptHashAndChainIdToAssetHashKey(scriptHash, toChainId), toAssetHash)
-	//// for unlock usage
-
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeBindAsset,
@@ -159,7 +149,7 @@ func (k Keeper) Lock(ctx sdk.Context, fromAddr sdk.AccAddress, sourceAssetDenom 
 	}
 
 	// invoke cross_chain_manager module to construct cosmos proof
-	if err := k.ccmKeeper.CreateCrossChainTx(ctx, toChainId, []byte(sourceAssetDenom), toAssetHash, "unlock", sink.Bytes()); err != nil {
+	if err := k.ccmKeeper.CreateCrossChainTx(ctx, fromAddr, toChainId, []byte(sourceAssetDenom), toAssetHash, "unlock", sink.Bytes()); err != nil {
 		return types.ErrLock(fmt.Sprintf("Lock, CreateCrossChainTx Error:%s", err.Error()))
 	}
 	// burn coins from fromAddr
@@ -170,9 +160,9 @@ func (k Keeper) Lock(ctx sdk.Context, fromAddr sdk.AccAddress, sourceAssetDenom 
 		sdk.NewEvent(
 			types.EventTypeLock,
 			sdk.NewAttribute(types.AttributeKeyFromAssetHash, hex.EncodeToString([]byte(sourceAssetDenom))),
-			sdk.NewAttribute(types.AttributeKeyFromAddress, fromAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyToChainId, strconv.FormatUint(toChainId, 10)),
 			sdk.NewAttribute(types.AttributeKeyToAssetHash, hex.EncodeToString(toAssetHash)),
+			sdk.NewAttribute(types.AttributeKeyFromAddress, fromAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyToAddress, hex.EncodeToString(toAddr)),
 			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 		),
@@ -242,18 +232,6 @@ func (k Keeper) ContainToContractAddr(ctx sdk.Context, toContractAddr []byte, fr
 
 func (k Keeper) ValidCreator(ctx sdk.Context, denom string, creator sdk.AccAddress) bool {
 	return bytes.Equal(k.ccmKeeper.GetDenomCreator(ctx, denom), creator.Bytes())
-}
-
-func (k Keeper) ExistDenom(ctx sdk.Context, denom string) (string, bool) {
-	storedSupplyCoins := k.supplyKeeper.GetSupply(ctx).GetTotal()
-	//return storedSupplyCoins.AmountOf(denom) != sdk.ZeroInt() || len(k.GetOperator(ctx, denom)) != 0
-	if len(k.ccmKeeper.GetDenomCreator(ctx, denom)) != 0 {
-		return fmt.Sprintf("k.ccmKeeper.GetDenomCreator(ctx,%s) is %s", denom, sdk.AccAddress(k.ccmKeeper.GetDenomCreator(ctx, denom)).String()), true
-	}
-	if !storedSupplyCoins.AmountOf(denom).Equal(sdk.ZeroInt()) {
-		return fmt.Sprintf("supply.AmountOf(%s) is %s", denom, storedSupplyCoins.AmountOf(denom).String()), true
-	}
-	return "", false
 }
 
 func (k Keeper) MintCoins(ctx sdk.Context, toAcct sdk.AccAddress, amt sdk.Coins) error {

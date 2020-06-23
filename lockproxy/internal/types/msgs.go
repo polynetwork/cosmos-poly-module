@@ -27,11 +27,11 @@ import (
 
 // Governance message types and routes
 const (
-	TypeMsgCreateLockProxy = "create_lock_proxy"
-
-	TypeMsgBindProxyHash = "bind_proxy_hash"
-	TypeMsgBindAssetHash = "bind_asset_hash"
-	TypeMsgLock          = "lock"
+	TypeMsgCreateLockProxy              = "create_lock_proxy"
+	TypeMsgCreateCoinAndDelegateToProxy = "create_delegate_to_proxy"
+	TypeMsgBindProxyHash                = "bind_proxy_hash"
+	TypeMsgBindAssetHash                = "bind_asset_hash"
+	TypeMsgLock                         = "lock"
 )
 
 // MsgSend - high level transaction of the coin module
@@ -72,6 +72,47 @@ type MsgBindProxyHash struct {
 	Operator         sdk.AccAddress
 	ToChainId        uint64
 	ToChainProxyHash []byte
+}
+
+// MsgSend - high level transaction of the coin module
+type MsgCreateCoinAndDelegateToProxy struct {
+	Creator       sdk.AccAddress
+	Coin          sdk.Coin
+	LockProxyHash []byte
+}
+
+var _ sdk.Msg = MsgCreateCoinAndDelegateToProxy{}
+
+// NewMsgSend - construct arbitrary multi-in, multi-out send msg.
+func NewMsgCreateCoinAndDelegateToProxy(creator sdk.AccAddress, coin sdk.Coin, lockProxyHash []byte) MsgCreateCoinAndDelegateToProxy {
+	return MsgCreateCoinAndDelegateToProxy{Creator: creator, Coin: coin, LockProxyHash: lockProxyHash}
+}
+
+// Route Implements Msg.
+func (msg MsgCreateCoinAndDelegateToProxy) Route() string { return RouterKey }
+
+// Type Implements Msg.
+func (msg MsgCreateCoinAndDelegateToProxy) Type() string { return TypeMsgCreateCoinAndDelegateToProxy }
+
+// ValidateBasic Implements Msg.
+func (msg MsgCreateCoinAndDelegateToProxy) ValidateBasic() error {
+	if msg.Creator.Empty() {
+		return sdkerrors.ErrInvalidAddress
+	}
+	if !msg.Coin.IsValid() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Coin.String())
+	}
+	return nil
+}
+
+// GetSigners Implements Msg.
+func (msg MsgCreateCoinAndDelegateToProxy) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Creator}
+}
+
+// GetSignBytes Implements Msg.
+func (msg MsgCreateCoinAndDelegateToProxy) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 func NewMsgBindProxyHash(operator sdk.AccAddress, toChainId uint64, toChainProxyHash []byte) MsgBindProxyHash {
@@ -124,11 +165,10 @@ type MsgBindAssetHash struct {
 	SourceAssetDenom string
 	ToChainId        uint64
 	ToAssetHash      []byte
-	InitialAmt       sdk.Int
 }
 
-func NewMsgBindAssetHash(operator sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toAssetHash []byte, initialAmt sdk.Int) MsgBindAssetHash {
-	return MsgBindAssetHash{operator, sourceAssetDenom, toChainId, toAssetHash, initialAmt}
+func NewMsgBindAssetHash(operator sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toAssetHash []byte) MsgBindAssetHash {
+	return MsgBindAssetHash{operator, sourceAssetDenom, toChainId, toAssetHash}
 }
 
 //nolint
@@ -154,9 +194,6 @@ func (msg MsgBindAssetHash) ValidateBasic() error {
 		// handler is implemented.
 		return ErrMsgBindAssetHash("Empty MsgBindAssetHash.ToAssetHash")
 	}
-	if msg.InitialAmt.IsNegative() {
-		return ErrMsgBindAssetHash(fmt.Sprintf("MsgBindAssetHash.InitialAmt: %s should not be negative", msg.InitialAmt.String()))
-	}
 	return nil
 }
 
@@ -166,8 +203,7 @@ func (msg MsgBindAssetHash) String() string {
   SourceAssetDenom: %s
   ToChainId:  		%d
   ToAssetHash:      %s
-  Limit: 			%s
-`, msg.Operator.String(), msg.SourceAssetDenom, msg.ToChainId, hex.EncodeToString(msg.ToAssetHash), msg.InitialAmt.String())
+`, msg.Operator.String(), msg.SourceAssetDenom, msg.ToChainId, hex.EncodeToString(msg.ToAssetHash))
 }
 
 // Implements Msg.

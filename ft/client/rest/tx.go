@@ -36,9 +36,6 @@ import (
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(fmt.Sprintf("/ft/create_coins/{%s}", Coins), CreateCoinsRequestHandlerFn(cliCtx)).Methods("POST")
-
-	r.HandleFunc(fmt.Sprintf("/ft/create_and_delegate/{%s}/{%s}", Coin, LockProxyHash), CreateAndDelegateCoinRequestHandlerFn(cliCtx)).Methods("POST")
-
 	r.HandleFunc(fmt.Sprintf("/ft/create_denom/{%s}", Denom), CreateDenomRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/ft/bind_asset_hash", BindAssetHashRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/ft/lock", LockRequestHandlerFn(cliCtx)).Methods("POST")
@@ -86,37 +83,6 @@ func CreateCoinsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 		msg := types.NewMsgCreateCoins(cliCtx.GetFromAddress(), vars[Coins])
-		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
-	}
-}
-
-func CreateAndDelegateCoinRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		vars := mux.Vars(r)
-		coin, err := sdk.ParseCoin(vars[Coin])
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		lockProxyHash, err := hex.DecodeString(vars[LockProxyHash])
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		var req CreateReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
-			return
-		}
-		req.BaseReq = req.BaseReq.Sanitize()
-		if !req.BaseReq.ValidateBasic(w) {
-			return
-		}
-		msg := types.NewMsgCreateCoinAndDelegateToProxy(cliCtx.GetFromAddress(), coin, lockProxyHash)
 		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

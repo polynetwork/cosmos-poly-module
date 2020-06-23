@@ -19,6 +19,7 @@ package types // noalias
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	supplyexported "github.com/cosmos/cosmos-sdk/x/supply/exported"
 	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
 	polytype "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/core/types"
 )
@@ -31,10 +32,20 @@ type HeaderSyncKeeper interface {
 	GetCurrentHeight(ctx sdk.Context, chainId uint64) (uint32, error)
 }
 
-type SupplyI interface {
-	SetTotal(total sdk.Coins) SupplyI
-}
+// SupplyKeeper defines the expected supply keeper
+type SupplyKeeper interface {
+	GetModuleAddress(name string) sdk.AccAddress
+	GetModuleAccount(ctx sdk.Context, name string) supplyexported.ModuleAccountI
+	// TODO remove with genesis 2-phases refactor https://github.com/cosmos/cosmos-sdk/issues/2862
+	SetModuleAccount(sdk.Context, supplyexported.ModuleAccountI)
 
+	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
+	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
+	SetSupply(ctx sdk.Context, supply supplyexported.SupplyI)
+	GetSupply(ctx sdk.Context) (supply supplyexported.SupplyI)
+}
 type UnlockKeeper interface {
 	Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk.AccAddress, toContractAddr []byte, argsBs []byte) error
 	ContainToContractAddr(ctx sdk.Context, toContractAddr []byte, fromChainId uint64) bool

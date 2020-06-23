@@ -23,6 +23,9 @@ const (
 
 	EventTypeCreateCrossChainTx = "make_from_cosmos_proof"
 	AttributeKeyStatus          = "status"
+	AttributeKeyFromAddress     = "from_address"
+	AttributeKeyFromContract    = "from_contract"
+	AttributeKeyToChainId       = "to_chain_id"
 	AttributeCrossChainId       = "cross_chainId"
 	AttributeKeyTxParamHash     = "make_tx_param_hash"
 	AttributeKeyMakeTxParam     = "make_tx_param"

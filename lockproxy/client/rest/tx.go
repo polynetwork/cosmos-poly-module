@@ -38,6 +38,7 @@ import (
 // RegisterRoutes - Central function to define routes that get registered by the main application
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/lockproxy/create_lock_proxy", createLockProxyRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/lockproxy/create_and_delegate/{%s}/{%s}", Coin, LockProxyHash), CreateAndDelegateCoinRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/lockproxy/bind_proxy/{%s}/{%s}", ToChainId, ToLockProxyHash), bindProxyRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/lockproxy/bind_asset", ToChainId, ToLockProxyHash), bindAssetRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/lockproxy/lock", ToChainId, ToLockProxyHash), lockRequestHandlerFn(cliCtx)).Methods("POST")
@@ -80,6 +81,37 @@ func createLockProxyRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc
 		}
 
 		msg := types.NewMsgCreateLockProxy(cliCtx.GetFromAddress())
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+	}
+}
+
+func CreateAndDelegateCoinRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		vars := mux.Vars(r)
+		coin, err := sdk.ParseCoin(vars[Coin])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		lockProxyHash, err := hex.DecodeString(vars[LockProxyHash])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		var req BaseReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+		msg := types.NewMsgCreateCoinAndDelegateToProxy(cliCtx.GetFromAddress(), coin, lockProxyHash)
 		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
@@ -130,7 +162,7 @@ func bindAssetRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.NewMsgBindAssetHash(cliCtx.GetFromAddress(), req.Denom, req.ToChainId, req.ToAssetHash, sdk.NewIntFromBigInt(req.InitialAmt))
+		msg := types.NewMsgBindAssetHash(cliCtx.GetFromAddress(), req.Denom, req.ToChainId, req.ToAssetHash)
 		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

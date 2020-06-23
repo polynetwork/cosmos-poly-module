@@ -34,6 +34,8 @@ func NewQuerier(k Keeper) sdk.Querier {
 			return queryContractToContractAddr(ctx, req, k)
 		case types.QueryParameters:
 			return queryParams(ctx, k)
+		case types.QueryModuleBalance:
+			return queryModuleBalance(ctx, req, k)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown query path: %s", path[0])
 		}
@@ -62,6 +64,25 @@ func queryParams(ctx sdk.Context, k Keeper) ([]byte, error) {
 	bz, e := codec.MarshalJSONIndent(types.ModuleCdc, params)
 	if e != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONMarshal, "could not marshal value: %+v to JSON", params)
+	}
+
+	return bz, nil
+}
+
+func queryModuleBalance(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params types.QueryModuleBalanceParam
+
+	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONUnmarshal, "failed to parse params: %s", err)
+	}
+	balance, err := k.GetModuleBalance(ctx, params.ModuleName)
+	if err != nil {
+		return nil, err
+	}
+
+	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, balance)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONMarshal, "could not marshal module: %s balance: %s  to JSON", params.ModuleName, balance)
 	}
 
 	return bz, nil

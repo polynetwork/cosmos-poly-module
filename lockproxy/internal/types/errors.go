@@ -20,45 +20,25 @@ package types
 
 import (
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (
-	ErrInvalidChainIdType          = sdkerrors.Register(ModuleName, 1, "ErrInvalidChainIdType")
-	ErrSendCoinsToModuleFailType   = sdkerrors.Register(ModuleName, 2, "ErrSendCoinsToModuleFailType")
-	ErrSendCoinsFromModuleFailType = sdkerrors.Register(ModuleName, 3, "ErrSendCoinsFromModuleFailType")
-	ErrCreateCrossChainTxType      = sdkerrors.Register(ModuleName, 4, "ErrCreateCrossChainTxType")
-	ErrToAssetHashType             = sdkerrors.Register(ModuleName, 5, "ErrToAssetHashType")
-	ErrMsgBindAssetHashType        = sdkerrors.Register(ModuleName, 6, "ErrMsgBindAssetHashType")
-	ErrMsgLockType                 = sdkerrors.Register(ModuleName, 7, "ErrMsgLockType")
-	ErrAccountNotExistType         = sdkerrors.Register(ModuleName, 8, "ErrAccountNotExistType")
-	ErrCreateLockProxyType         = sdkerrors.Register(ModuleName, 9, "ErrCreateLockProxyType")
-	ErrBindProxyHashType           = sdkerrors.Register(ModuleName, 10, "ErrBindProxyHashType")
-	ErrBindAssetHashType           = sdkerrors.Register(ModuleName, 11, "ErrBindAssetHashType")
-	ErrLockType                    = sdkerrors.Register(ModuleName, 12, "ErrLockType")
-	ErrUnLockType                  = sdkerrors.Register(ModuleName, 13, "ErrUnLockType")
-	ErrMsgBindProxyHashType        = sdkerrors.Register(ModuleName, 14, "ErrMsgBindProxyHashType")
+	ErrInvalidChainIdType               = sdkerrors.Register(ModuleName, 1, "ErrInvalidChainIdType")
+	ErrMsgBindAssetHashType             = sdkerrors.Register(ModuleName, 2, "ErrMsgBindAssetHashType")
+	ErrMsgLockType                      = sdkerrors.Register(ModuleName, 3, "ErrMsgLockType")
+	ErrAccountNotExistType              = sdkerrors.Register(ModuleName, 4, "ErrAccountNotExistType")
+	ErrCreateLockProxyType              = sdkerrors.Register(ModuleName, 5, "ErrCreateLockProxyType")
+	ErrBindProxyHashType                = sdkerrors.Register(ModuleName, 6, "ErrBindProxyHashType")
+	ErrBindAssetHashType                = sdkerrors.Register(ModuleName, 7, "ErrBindAssetHashType")
+	ErrLockType                         = sdkerrors.Register(ModuleName, 8, "ErrLockType")
+	ErrUnLockType                       = sdkerrors.Register(ModuleName, 9, "ErrUnLockType")
+	ErrMsgBindProxyHashType             = sdkerrors.Register(ModuleName, 10, "ErrMsgBindProxyHashType")
+	ErrCreateCoinAndDelegateToProxyType = sdkerrors.Register(ModuleName, 11, "ErrCreateCoinAndDelegateToProxyType")
 )
 
 func ErrInvalidChainId(chainId uint64) error {
 	return sdkerrors.Wrapf(ErrInvalidChainIdType, fmt.Sprintf("Reason: unknown chainId with id %d", chainId))
-}
-
-func ErrSendCoinsToModuleFail(amt sdk.Coins, fromAddr sdk.AccAddress, toAcct sdk.AccAddress) error {
-	return sdkerrors.Wrapf(ErrSendCoinsToModuleFailType, fmt.Sprintf("send coins:%s from account:%s to Module account:%s error", amt.String(), fromAddr.String(), toAcct.String()))
-}
-
-func ErrSendCoinsFromModuleFail(amt sdk.Coins, fromAddr sdk.AccAddress, toAcct sdk.AccAddress) error {
-	return sdkerrors.Wrapf(ErrSendCoinsFromModuleFailType, fmt.Sprintf("send coins:%s from Module account:%s to receiver account:%s error", amt.String(), fromAddr.String(), toAcct.String()))
-}
-
-func ErrCreateCrossChainTx(err error) error {
-	return sdkerrors.Wrapf(ErrCreateCrossChainTxType, fmt.Sprintf("create cross chain tx error:%v", err))
-}
-
-func ErrToAssetHash(reason string) error {
-	return sdkerrors.Wrapf(ErrToAssetHashType, fmt.Sprintf("Reason: %s", reason))
 }
 
 func ErrMsgBindAssetHash(reason string) error {
@@ -93,4 +73,8 @@ func ErrUnLock(reason string) error {
 
 func ErrMsgBindProxyHash(reason string) error {
 	return sdkerrors.Wrapf(ErrMsgBindProxyHashType, fmt.Sprintf("Reason: %s", reason))
+}
+
+func ErrCreateCoinAndDelegateToProxy(reason string) error {
+	return sdkerrors.Wrapf(ErrCreateCoinAndDelegateToProxyType, fmt.Sprintf("Reason: %s", reason))
 }

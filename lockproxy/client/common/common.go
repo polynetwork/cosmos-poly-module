@@ -53,12 +53,3 @@ func QueryAssetHash(cliCtx context.CLIContext, queryRoute string, lockProxy []by
 	)
 	return res, err
 }
-
-func QueryLockedAmt(cliCtx context.CLIContext, queryRoute string, sourceAssetDenom string) ([]byte, error) {
-
-	res, _, err := cliCtx.QueryWithData(
-		fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryLockedAmt),
-		cliCtx.Codec.MustMarshalJSON(types.NewQueryLockedAmtParam(sourceAssetDenom)),
-	)
-	return res, err
-}

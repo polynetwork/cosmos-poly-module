@@ -50,9 +50,8 @@ type SupplyKeeper interface {
 }
 
 type CrossChainManager interface {
-	CreateCrossChainTx(ctx sdk.Context, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
-}
-
-type SupplyI interface {
-	SetTotal(total sdk.Coins) SupplyI
+	CreateCrossChainTx(ctx sdk.Context, fromAddr sdk.AccAddress, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
+	SetDenomCreator(ctx sdk.Context, denom string, creator sdk.AccAddress)
+	GetDenomCreator(ctx sdk.Context, denom string) sdk.AccAddress
+	ExistDenom(ctx sdk.Context, denom string) (string, bool)
 }

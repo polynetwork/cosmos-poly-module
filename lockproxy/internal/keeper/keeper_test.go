@@ -18,11 +18,13 @@
 package keeper_test
 
 import (
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/polynetwork/cosmos-poly-module/simapp"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"gotest.tools/assert"
 	"testing"
 )
 
@@ -62,9 +64,47 @@ func Test_lockproxy_CreateLockProxy(t *testing.T) {
 			require.Nil(t, err)
 		}
 
-		err = app.FtKeeper.CreateCoinAndDelegateToProxy(ctx, creator, coin, creator)
+		err = app.LockProxyKeeper.CreateCoinAndDelegateToProxy(ctx, creator, coin, creator)
 		if testCase.expectSucceed {
 			require.Nil(t, err)
+		} else {
+			require.Error(t, err)
+		}
+	}
+}
+
+func Test_lockproxy_CreateCoinAndDelegateToProxy(t *testing.T) {
+	app, ctx := createTestApp(true)
+	app.SupplyKeeper.SetSupply(ctx, supply.NewSupply(sdk.Coins{sdk.NewCoin("stake", sdk.NewInt(100))}))
+
+	validLockProxy := sdk.AccAddress([]byte("validLockProxy"))
+	err := app.LockProxyKeeper.CreateLockProxy(ctx, validLockProxy)
+	require.Nil(t, err)
+
+	testCases := []struct {
+		address       string
+		coin          string
+		lockProxy     []byte
+		expectSucceed bool
+	}{
+		{"addr1", "100coin1", validLockProxy, true},
+		{"addr1", "10000000000000000000000000000000000000000000000000000000000000000000000000coin2", validLockProxy, true},
+		{"addr1", "3coin3", validLockProxy, true},
+		{"addr1", "4coin4", validLockProxy, true},
+		{"addr2", "100coin6", sdk.AccAddress([]byte("invalidLockProxy")), false},
+	}
+	for _, testCase := range testCases {
+		addr := sdk.AccAddress([]byte(testCase.address))
+		acc := app.AccountKeeper.NewAccountWithAddress(ctx, addr)
+		creator := acc.GetAddress()
+		require.Equal(t, addr, creator, fmt.Sprintf("expect: %s, got: %s", addr, creator))
+		coin, err := sdk.ParseCoin(testCase.coin)
+		require.Nil(t, err)
+		err = app.LockProxyKeeper.CreateCoinAndDelegateToProxy(ctx, creator, coin, testCase.lockProxy)
+		if testCase.expectSucceed {
+			require.Nil(t, err)
+			supply1 := app.SupplyKeeper.GetSupply(ctx).GetTotal()
+			assert.Equal(t, true, supply1.AmountOf(coin.Denom).Equal(coin.Amount), "supply amount not equal")
 		} else {
 			require.Error(t, err)
 		}
@@ -85,15 +125,13 @@ func Test_lockproxy_BindProxyHash(t *testing.T) {
 		createCoinSucceed  bool // when createCoin == 1, check if expect create coin succeed or not
 		toChainId          uint64
 		toAssetHash        []byte
-		initialAmt         sdk.Int
 		bindSucceed        bool // check if bind succeed
 	}{
-		{"lp1", "addr1", "100coin1", 0, 0, false, false, 2, []byte{1, 2, 3, 4}, sdk.NewInt(100), false},
-		{"lp1", "addr1", "100coin1", 1, 0, true, false, 2, []byte{1, 2, 3, 5}, sdk.NewInt(100), false},
-		{"lp2", "addr2", "100coin2", 1, 1, true, true, 2, []byte{1, 2, 3, 6}, sdk.NewInt(100), true},
-		{"lp3", "addr3", "100coin3", 1, 1, true, true, 2, []byte{1, 2, 3, 7}, sdk.NewInt(10), false},
-		{"lp4", "addr4", "100coin3", 1, 1, true, false, 2, []byte{1, 2, 3, 8}, sdk.NewInt(100), true}, // although bind asset true, means nothing
-		{"lp5", "addr2", "100coin2", 1, 0, true, false, 2, []byte{1, 2, 3, 9}, sdk.NewInt(100), true}, // of course, one denom can be bond within two lockproxy, yet, which one is valid depends on the toChain lockproxy contract
+		{"lp1", "addr1", "100coin1", 0, 0, false, false, 2, []byte{1, 2, 3, 4}, false},
+		{"lp1", "addr1", "100coin1", 1, 0, true, false, 2, []byte{1, 2, 3, 5}, false},
+		{"lp1", "addr1", "100coin1", 0, 1, true, true, 2, []byte{1, 2, 3, 5}, true},
+		{"lp2", "addr2", "100coin2", 1, 1, true, true, 2, []byte{1, 2, 3, 6}, true},
+		{"lp5", "addr2", "100coin2", 1, 0, true, false, 2, []byte{1, 2, 3, 9}, true}, // of course, one denom can be bond within two lockproxy, yet, which one is valid depends on the toChain lockproxy contract
 	}
 	for _, testCase := range testCases {
 		proxyCreator := sdk.AccAddress([]byte(testCase.lockProxyCreator))
@@ -111,7 +149,7 @@ func Test_lockproxy_BindProxyHash(t *testing.T) {
 		require.Nil(t, err, "expect parse coin nil")
 		if testCase.createCoin == 1 {
 
-			err := app.FtKeeper.CreateCoinAndDelegateToProxy(ctx, coinCreator, coin, proxyCreator)
+			err := app.LockProxyKeeper.CreateCoinAndDelegateToProxy(ctx, coinCreator, coin, proxyCreator)
 			if testCase.createCoinSucceed {
 				require.Nil(t, err, "expect create lock proxy nil")
 			} else {
@@ -119,7 +157,7 @@ func Test_lockproxy_BindProxyHash(t *testing.T) {
 			}
 		}
 
-		err = app.LockProxyKeeper.BindAssetHash(ctx, proxyCreator, coin.Denom, testCase.toChainId, testCase.toAssetHash, testCase.initialAmt)
+		err = app.LockProxyKeeper.BindAssetHash(ctx, proxyCreator, coin.Denom, testCase.toChainId, testCase.toAssetHash)
 		if testCase.bindSucceed {
 			require.Nil(t, err)
 		} else {

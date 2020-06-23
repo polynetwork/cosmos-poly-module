@@ -21,43 +21,25 @@ package types
 const (
 	AttributeValueCategory = ModuleName
 
-	EventTypeSyncHeader           = "sync_header"
-	AttributeKeyChainId           = "chain_id"
-	AttributeKeyHeight            = "height"
-	AttributeKeyBlockHash         = "block_hash"
-	AttributeKeyNativeChainHeight = "native_chain_height"
+	EventTypeCreateCoins = "create_coins"
 
-	EventTypeCreateCoin                   = "create_coin"
-	EventTypeCreateAndDelegateCoinToProxy = "create_and_delegate_coin_to_proxy"
-	AttributeKeyToChainId                 = "to_chain_id"
-	AttributeKeyToChainProxyHash          = "to_chain_proxy_hash"
+	AttributeKeyToChainId = "to_chain_id"
 
 	EventTypeBindAsset           = "bind_asset_hash"
 	AttributeKeySourceAssetDenom = "source_asset_denom"
 	AttributeKeyCreator          = "creator"
 	AttributeKeyFromAssetHash    = "from_asset_hash"
 	AttributeKeyToChainAssetHash = "to_chain_asset_hash"
-	AttributeKeyInitialAmt       = "initial_amt"
 	EventTypeLock                = "lock"
 	AttributeKeyFromAddress      = "from_address"
 	AttributeKeyToAddress        = "to_address"
 	AttributeKeyAmount           = "amount"
-	AttributeKeyCoins            = "coins"
 
-	EventTypeCreateCrossChainTx = "make_from_cosmos_proof"
-	AttributeCrossChainId       = "cross_chainId"
-	AttributeKeyTxParamHash     = "make_tx_param_hash"
-	AttributeKeyMakeTxParam     = "make_tx_param"
-
-	EventTypeVerifyToCosmosProof                        = "verify_to_cosmos_proof"
-	AttributeKeyMerkleValueTxHash                       = "merkle_value.txhash"
-	AttributeKeyMerkleValueMakeTxParamTxHash            = "merkle_value.make_tx_param.txhash"
-	AttributeKeyMerkleValueMakeTxParamToContractAddress = "merkle_value.make_tx_param.to_contract_address"
-	AttributeKeyFromChainId                             = "from_chain_id"
+	AttributeKeyFromChainId = "from_chain_id"
 
 	EventTypeUnlock              = "unlock"
 	AttributeKeyFromContractHash = "from_contract_hash"
-	AttributeKeyToAssetDenom     = "to_asset_denom"
+	AttributeKeyToAssetHash      = "to_asset_hash"
 
 	EventTypeSetRedeemScript = "set_redeem_script"
 	AttributeKeyRedeemKey    = "redeem_key"

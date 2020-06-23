@@ -18,6 +18,7 @@
 package lockproxy
 
 import (
+	"github.com/polynetwork/cosmos-poly-module/lockproxy/exported"
 	"github.com/polynetwork/cosmos-poly-module/lockproxy/internal/keeper"
 	"github.com/polynetwork/cosmos-poly-module/lockproxy/internal/types"
 )
@@ -36,11 +37,12 @@ const (
 	AttributeKeyToChainId        = types.AttributeKeyToChainId
 	AttributeKeyToChainProxyHash = types.AttributeKeyToChainProxyHash
 
+	EventTypeCreateAndDelegateCoinToProxy = types.EventTypeCreateAndDelegateCoinToProxy
+
 	EventTypeBindAsset           = types.EventTypeBindAsset
 	AttributeKeySourceAssetDenom = types.AttributeKeySourceAssetDenom
 	AttributeKeySourceAssetHash  = types.AttributeKeySourceAssetHash
 	AttributeKeyToChainAssetHash = types.AttributeKeyToChainAssetHash
-	AttributeKeyInitialAmt       = types.AttributeKeyInitialAmt
 
 	EventTypeLock           = types.EventTypeLock
 	AttributeKeyFromAddress = types.AttributeKeyFromAddress
@@ -61,16 +63,16 @@ const (
 
 var (
 	// functions aliases
-	RegisterCodec = types.RegisterCodec
-	NewKeeper     = keeper.NewKeeper
-	NewQuerier    = keeper.NewQuerier
+	RegisterCodec                      = types.RegisterCodec
+	NewKeeper                          = keeper.NewKeeper
+	NewQuerier                         = keeper.NewQuerier
+	NewMsgCreateCoinAndDelegateToProxy = types.NewMsgCreateCoinAndDelegateToProxy
 
 	NewMsgBindAssetHash    = types.NewMsgBindAssetHash
 	NewMsgBindProxyHash    = types.NewMsgBindProxyHash
 	NewMsgLock             = types.NewMsgLock
 	NewQueryProxyHashParam = types.NewQueryProxyHashParam
 	NewQueryAssetHashParam = types.NewQueryAssetHashParam
-	NewQueryLockedAmtParam = types.NewQueryLockedAmtParam
 	GetBindProxyKey        = keeper.GetBindProxyKey
 	GetCrossedAmountKey    = keeper.GetCrossedAmountKey
 	NewMsgCreateLockProxy  = types.NewMsgCreateLockProxy
@@ -87,15 +89,16 @@ var (
 	QueryProxyByOperator = types.QueryProxyByOperator
 	QueryProxyHash       = types.QueryProxyHash
 	QueryAssetHash       = types.QueryAssetHash
-	QueryCrossedAmount   = types.QueryLockedAmt
 )
 
 type (
-	Keeper             = keeper.Keeper
-	MsgCreateLockProxy = types.MsgCreateLockProxy
-	MsgBindProxyHash   = types.MsgBindProxyHash
-	MsgBindAssetHash   = types.MsgBindAssetHash
-	MsgLock            = types.MsgLock
+	Keeper                          = keeper.Keeper
+	MsgCreateLockProxy              = types.MsgCreateLockProxy
+	MsgCreateCoinAndDelegateToProxy = types.MsgCreateCoinAndDelegateToProxy
+	MsgBindProxyHash                = types.MsgBindProxyHash
+	MsgBindAssetHash                = types.MsgBindAssetHash
+	MsgLock                         = types.MsgLock
 
-	TxArgs = types.TxArgs
+	TxArgs       = types.TxArgs
+	UnlockKeeper = exported.UnlockKeeper
 )

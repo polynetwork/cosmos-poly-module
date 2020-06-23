@@ -13,4 +13,5 @@ require (
 	github.com/tendermint/tendermint v0.33.3
 	github.com/tendermint/tm-db v0.5.1
 	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
+	gotest.tools v2.2.0+incompatible
 )

@@ -20,7 +20,6 @@ package cli
 import (
 	"bufio"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 	"strings"
@@ -48,8 +47,6 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	txCmd.AddCommand(flags.PostCommands(
-		SendCreateCoinAndDelegateToProxyTxCmd(cdc),
-
 		SendCreateDenomTxCmd(cdc),
 		SendBindAssetHashTxCmd(cdc),
 		SendLockTxCmd(cdc),
@@ -58,50 +55,6 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	return txCmd
 }
 
-func SendCreateCoinAndDelegateToProxyTxCmd(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "create-coin-delegate [creator] [coin] [lock_proxy_hash/lock_proxy_creator]",
-		Short: "Create coin by creator, and immediately delegate to the lock proxy module account",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`
-Example:
-$ %s tx %s create-coin-delegate cosmos1lzk4nch5v2snduup2uujpud9j6gqeunqarx2d9 1000mst1, e931a4f7020caaacf3ce942567625ebbc0a0ab35
-Or 
-$ $ %s tx %s create-coin-delegate cosmos1lzk4nch5v2snduup2uujpud9j6gqeunqarx2d9 1000mst1, cosmos1ayc6faczpj42eu7wjsjkwcj7h0q2p2e4vrlkzf
-`,
-				version.ClientName, types.ModuleName, version.ClientName, types.ModuleName,
-			),
-		),
-		Args: cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			creator, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-
-			coin, err := sdk.ParseCoin(args[1])
-			if err != nil {
-				return err
-			}
-
-			lockProxy, err := hex.DecodeString(args[2])
-			if err != nil {
-				lockProxyBs, err1 := sdk.AccAddressFromBech32(args[2])
-				if err1 != nil {
-					return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("lockproxy: %s or operator from hex or from Bech32 Error: %s", err, err1))
-				}
-				lockProxy = append(lockProxy, lockProxyBs...)
-			}
-			msg := types.NewMsgCreateCoinAndDelegateToProxy(creator, coin, sdk.AccAddress(lockProxy))
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
-		},
-	}
-	return cmd
-}
 func SendCreateDenomTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-denom [creator] [denom]",

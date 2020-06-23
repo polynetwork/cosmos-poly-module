@@ -29,8 +29,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case types.MsgCreateCoinAndDelegateToProxy:
-			return handleMsgCreateCoinAndDelegateToProxy(ctx, k, msg)
 		case types.MsgCreateDenom:
 			return handleMsgCreateDenom(ctx, k, msg)
 		case types.MsgBindAssetHash:
@@ -45,24 +43,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized %s message type: %T", types.ModuleName, msg)
 		}
 	}
-}
-
-func handleMsgCreateCoinAndDelegateToProxy(ctx sdk.Context, k keeper.Keeper, msg types.MsgCreateCoinAndDelegateToProxy) (*sdk.Result, error) {
-
-	//err := k.SendCoins(ctx, msg.FromAddress, msg.ToAddress, msg.Amount)
-
-	if err := k.CreateCoinAndDelegateToProxy(ctx, msg.Creator, msg.Coin, msg.LockProxyHash); err != nil {
-		return nil, err
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-		),
-	)
-
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
 // Handle MsgMultiSend.
