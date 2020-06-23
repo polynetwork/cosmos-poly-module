@@ -53,9 +53,6 @@ func (msg MsgProcessCrossChainTx) ValidateBasic() error {
 	if msg.Submitter.Empty() {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "MsgProcessCrossChainTx.Submitter is empty")
 	}
-	if msg.FromChainId <= 0 {
-		return ErrMsgProcessCrossChainTx(fmt.Sprintf("ChainId: %d is invalid", msg.FromChainId))
-	}
 	if len(msg.Proof) == 0 {
 		// Disable software upgrade proposals as they are currently equivalent
 		// to text proposals. Re-enable once a valid software upgrade proposal
