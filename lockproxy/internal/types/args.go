@@ -20,7 +20,7 @@ package types
 import (
 	"fmt"
 	"github.com/polynetwork/cosmos-poly-module/common"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
+	polycommon "github.com/polynetwork/poly/common"
 	"math/big"
 )
 

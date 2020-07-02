@@ -24,71 +24,64 @@ import (
 )
 
 const (
-	ModuleName        = types.ModuleName
-	DefaultParamspace = types.DefaultParamspace
-	StoreKey          = types.StoreKey
-	QuerierRoute      = types.QuerierRoute
-	QueryParameters   = types.QueryParameters
-	RouterKey         = types.RouterKey
-
-	AttributeValueCategory = types.AttributeValueCategory
-
-	EventTypeBindProxy           = types.EventTypeBindProxy
-	AttributeKeyToChainId        = types.AttributeKeyToChainId
-	AttributeKeyToChainProxyHash = types.AttributeKeyToChainProxyHash
-
+	ModuleName                            = types.ModuleName
+	DefaultParamspace                     = types.DefaultParamspace
+	StoreKey                              = types.StoreKey
+	QuerierRoute                          = types.QuerierRoute
+	QueryParameters                       = types.QueryParameters
+	RouterKey                             = types.RouterKey
+	AttributeValueCategory                = types.AttributeValueCategory
+	EventTypeCreateLockProxy              = types.EventTypeCreateLockProxy
 	EventTypeCreateAndDelegateCoinToProxy = types.EventTypeCreateAndDelegateCoinToProxy
-
-	EventTypeBindAsset           = types.EventTypeBindAsset
-	AttributeKeySourceAssetDenom = types.AttributeKeySourceAssetDenom
-	AttributeKeySourceAssetHash  = types.AttributeKeySourceAssetHash
-	AttributeKeyToChainAssetHash = types.AttributeKeyToChainAssetHash
-
-	EventTypeLock           = types.EventTypeLock
-	AttributeKeyFromAddress = types.AttributeKeyFromAddress
-	AttributeKeyToAddress   = types.AttributeKeyToAddress
-	AttributeKeyAmount      = types.AttributeKeyAmount
-
-	AttributeKeyFromChainId = types.AttributeKeyFromChainId
-
-	EventTypeUnlock              = types.EventTypeUnlock
-	AttributeKeyFromContractHash = types.AttributeKeyFromContractHash
-	AttributeKeyToAssetDenom     = types.AttributeKeyToAssetDenom
-
-	EventTypeCreateLockProxy = types.EventTypeCreateLockProxy
-	AttributeKeyCreator      = types.AttributeKeyCreator
-	AttributeKeyProxyHash    = types.AttributeKeyProxyHash
-	AttributeKeyLockProxy    = types.AttributeKeyLockProxy
+	EventTypeBindProxy                    = types.EventTypeBindProxy
+	EventTypeBindAsset                    = types.EventTypeBindAsset
+	EventTypeLock                         = types.EventTypeLock
+	EventTypeUnlock                       = types.EventTypeUnlock
+	AttributeKeyCreator                   = types.AttributeKeyCreator
+	AttributeKeyLockProxy                 = types.AttributeKeyLockProxy
+	AttributeKeyToChainId                 = types.AttributeKeyToChainId
+	AttributeKeyToChainProxyHash          = types.AttributeKeyToChainProxyHash
+	AttributeKeySourceAssetDenom          = types.AttributeKeySourceAssetDenom
+	AttributeKeyFromAssetHash             = types.AttributeKeyFromAssetHash
+	AttributeKeyToAssetHash               = types.AttributeKeyToAssetHash
+	AttributeKeyFromAddress               = types.AttributeKeyFromAddress
+	AttributeKeyToAddress                 = types.AttributeKeyToAddress
+	AttributeKeyAmount                    = types.AttributeKeyAmount
 )
 
 var (
-	// functions aliases
 	RegisterCodec                      = types.RegisterCodec
 	NewKeeper                          = keeper.NewKeeper
 	NewQuerier                         = keeper.NewQuerier
+	ModuleCdc                          = types.ModuleCdc
+	NewMsgCreateLockProxy              = types.NewMsgCreateLockProxy
 	NewMsgCreateCoinAndDelegateToProxy = types.NewMsgCreateCoinAndDelegateToProxy
-
-	NewMsgBindAssetHash    = types.NewMsgBindAssetHash
-	NewMsgBindProxyHash    = types.NewMsgBindProxyHash
-	NewMsgLock             = types.NewMsgLock
-	NewQueryProxyHashParam = types.NewQueryProxyHashParam
-	NewQueryAssetHashParam = types.NewQueryAssetHashParam
-	GetBindProxyKey        = keeper.GetBindProxyKey
-	GetCrossedAmountKey    = keeper.GetCrossedAmountKey
-	NewMsgCreateLockProxy  = types.NewMsgCreateLockProxy
-	// variable aliases
-	ModuleCdc         = types.ModuleCdc
-	OperatorKey       = types.OperatorKey
-	ErrInvalidChainId = types.ErrInvalidChainId
-
-	BindProxyPrefix     = keeper.BindProxyPrefix
-	BindAssetPrefix     = keeper.BindAssetPrefix
-	CrossedAmountPrefix = keeper.CrossedAmountPrefix
-
-	// query balance path
-	QueryProxyByOperator = types.QueryProxyByOperator
-	QueryProxyHash       = types.QueryProxyHash
-	QueryAssetHash       = types.QueryAssetHash
+	NewMsgBindAssetHash                = types.NewMsgBindAssetHash
+	NewMsgBindProxyHash                = types.NewMsgBindProxyHash
+	NewMsgLock                         = types.NewMsgLock
+	ErrInvalidChainId                  = types.ErrInvalidChainId
+	ErrMsgBindAssetHash                = types.ErrMsgBindAssetHash
+	ErrMsgLock                         = types.ErrMsgLock
+	ErrAccountNotExist                 = types.ErrAccountNotExist
+	ErrCreateLockProxy                 = types.ErrCreateLockProxy
+	ErrBindProxyHash                   = types.ErrBindProxyHash
+	ErrBindAssetHash                   = types.ErrBindAssetHash
+	ErrLock                            = types.ErrLock
+	ErrUnLock                          = types.ErrUnLock
+	ErrMsgBindProxyHash                = types.ErrMsgBindProxyHash
+	ErrCreateCoinAndDelegateToProxy    = types.ErrCreateCoinAndDelegateToProxy
+	OperatorToLockProxyKey             = keeper.OperatorToLockProxyKey
+	BindProxyPrefix                    = keeper.BindProxyPrefix
+	BindAssetPrefix                    = keeper.BindAssetPrefix
+	GetOperatorToLockProxyKey          = keeper.GetOperatorToLockProxyKey
+	GetBindProxyKey                    = keeper.GetBindProxyKey
+	GetBindAssetHashKey                = keeper.GetBindAssetHashKey
+	QueryProxyByOperator               = types.QueryProxyByOperator
+	QueryProxyHash                     = types.QueryProxyHash
+	QueryAssetHash                     = types.QueryAssetHash
+	NewQueryProxyByOperatorParam       = types.NewQueryProxyByOperatorParam
+	NewQueryProxyHashParam             = types.NewQueryProxyHashParam
+	NewQueryAssetHashParam             = types.NewQueryAssetHashParam
 )
 
 type (
@@ -98,7 +91,6 @@ type (
 	MsgBindProxyHash                = types.MsgBindProxyHash
 	MsgBindAssetHash                = types.MsgBindAssetHash
 	MsgLock                         = types.MsgLock
-
-	TxArgs       = types.TxArgs
-	UnlockKeeper = exported.UnlockKeeper
+	TxArgs                          = types.TxArgs
+	UnlockKeeper                    = exported.UnlockKeeper
 )

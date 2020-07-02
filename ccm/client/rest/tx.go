@@ -18,7 +18,6 @@
 package rest
 
 import (
-	"encoding/hex"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/polynetwork/cosmos-poly-module/ccm/internal/types"
 	"net/http"
@@ -40,9 +39,10 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 type ProcessCrossChainTxReq struct {
 	BaseReq     rest.BaseReq `json:"base_req" yaml:"base_req"`
 	FromChainId uint64       `json:"from_chain_id" yaml:"from_chain_id"`
-	Height      uint32       `json:"height" yaml:"height"`
 	Proof       string       `json:"proof" yaml:"proof"`
 	Header      string       `json:"header" yaml:"header"`
+	HeaderProof string       `json:"header_proof" yaml:"header_proof"`
+	CurHeader   string       `json:"cur_header" yaml:"cur_header"`
 }
 
 // SendRequestHandlerFn - http request handler to send coins to a address.
@@ -62,12 +62,7 @@ func ProcessCrossChainTxRequestHandlerFn(cliCtx context.CLIContext) http.Handler
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		header, err := hex.DecodeString(req.Header)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		msg := types.NewMsgProcessCrossChainTx(fromAddr, req.FromChainId, req.Height, req.Proof, header)
+		msg := types.NewMsgProcessCrossChainTx(fromAddr, req.FromChainId, req.Proof, req.Header, req.HeaderProof, req.CurHeader)
 		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

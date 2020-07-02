@@ -32,11 +32,11 @@ const (
 // MsgSend - high level transaction of the coin module
 type MsgSyncGenesisParam struct {
 	Syncer        sdk.AccAddress
-	GenesisHeader []byte
+	GenesisHeader string
 }
 
 // NewMsgSend - construct arbitrary multi-in, multi-out send msg.
-func NewMsgSyncGenesisParam(syncer sdk.AccAddress, genesisHeader []byte) MsgSyncGenesisParam {
+func NewMsgSyncGenesisParam(syncer sdk.AccAddress, genesisHeader string) MsgSyncGenesisParam {
 	return MsgSyncGenesisParam{Syncer: syncer, GenesisHeader: genesisHeader}
 }
 
@@ -52,7 +52,7 @@ func (msg MsgSyncGenesisParam) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, fmt.Sprintf("address:%s", msg.Syncer.String()))
 	}
 	if len(msg.GenesisHeader) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "missing GenesisHeader bytes")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "missing GenesisHeader string")
 	}
 	return nil
 }
@@ -70,11 +70,11 @@ func (msg MsgSyncGenesisParam) GetSignBytes() []byte {
 // MsgMultiSend - high level transaction of the coin module
 type MsgSyncHeadersParam struct {
 	Syncer  sdk.AccAddress
-	Headers [][]byte
+	Headers []string
 }
 
 // NewMsgMultiSend - construct arbitrary multi-in, multi-out send msg.
-func NewMsgSyncHeadersParam(syncer sdk.AccAddress, headers [][]byte) MsgSyncHeadersParam {
+func NewMsgSyncHeadersParam(syncer sdk.AccAddress, headers []string) MsgSyncHeadersParam {
 	return MsgSyncHeadersParam{Syncer: syncer, Headers: headers}
 }
 

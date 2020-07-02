@@ -23,20 +23,17 @@ import (
 )
 
 const (
-	ModuleName        = types.ModuleName
-	DefaultParamspace = types.DefaultParamspace
-	StoreKey          = types.StoreKey
-	QuerierRoute      = types.QuerierRoute
-	QueryParameters   = types.QueryParameters
-	RouterKey         = types.RouterKey
-
-	AttributeValueCategory = types.AttributeValueCategory
-
-	EventTypeCreateCrossChainTx = types.EventTypeCreateCrossChainTx
-	AttributeCrossChainId       = types.AttributeCrossChainId
-	AttributeKeyTxParamHash     = types.AttributeKeyTxParamHash
-	AttributeKeyMakeTxParam     = types.AttributeKeyMakeTxParam
-
+	ModuleName                                          = types.ModuleName
+	DefaultParamspace                                   = types.DefaultParamspace
+	StoreKey                                            = types.StoreKey
+	QuerierRoute                                        = types.QuerierRoute
+	QueryParameters                                     = types.QueryParameters
+	RouterKey                                           = types.RouterKey
+	AttributeValueCategory                              = types.AttributeValueCategory
+	EventTypeCreateCrossChainTx                         = types.EventTypeCreateCrossChainTx
+	AttributeCrossChainId                               = types.AttributeCrossChainId
+	AttributeKeyTxParamHash                             = types.AttributeKeyTxParamHash
+	AttributeKeyMakeTxParam                             = types.AttributeKeyMakeTxParam
 	EventTypeVerifyToCosmosProof                        = types.EventTypeVerifyToCosmosProof
 	AttributeKeyMerkleValueTxHash                       = types.AttributeKeyMerkleValueTxHash
 	AttributeKeyMerkleValueMakeTxParamTxHash            = types.AttributeKeyMerkleValueMakeTxParamTxHash
@@ -46,18 +43,15 @@ const (
 
 var (
 	// functions aliases
-	RegisterCodec = types.RegisterCodec
-
-	NewKeeper                 = keeper.NewKeeper
-	NewQuerier                = keeper.NewQuerier
-	NewGenesisState           = types.NewGenesisState
-	DefaultGenesisState       = types.DefaultGenesisState
-	ValidateGenesis           = types.ValidateGenesis
-	NewMsgProcessCrossChainTx = types.NewMsgProcessCrossChainTx
-	// key function
-	GetCrossChainTxKey = keeper.GetCrossChainTxKey
-	GetDoneTxKey       = keeper.GetDoneTxKey
-	// variable aliases
+	RegisterCodec              = types.RegisterCodec
+	NewKeeper                  = keeper.NewKeeper
+	NewQuerier                 = keeper.NewQuerier
+	NewGenesisState            = types.NewGenesisState
+	DefaultGenesisState        = types.DefaultGenesisState
+	ValidateGenesis            = types.ValidateGenesis
+	NewMsgProcessCrossChainTx  = types.NewMsgProcessCrossChainTx
+	GetCrossChainTxKey         = keeper.GetCrossChainTxKey
+	GetDoneTxKey               = keeper.GetDoneTxKey
 	ModuleCdc                  = types.ModuleCdc
 	OperatorKey                = types.OperatorKey
 	NewQueryModuleBalanceParam = types.NewQueryModuleBalanceParam
@@ -65,9 +59,7 @@ var (
 )
 
 type (
-	Keeper  = keeper.Keeper
-	KeeperI = keeper.KeeperI
-
+	Keeper                 = keeper.Keeper
 	MsgProcessCrossChainTx = types.MsgProcessCrossChainTx
 	UnlockKeeper           = types.UnlockKeeper
 	GenesisState           = types.GenesisState

@@ -20,8 +20,8 @@ package types_test
 import (
 	"encoding/hex"
 	"fmt"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
 	"github.com/polynetwork/cosmos-poly-module/lockproxy/internal/types"
+	polycommon "github.com/polynetwork/poly/common"
 	"github.com/stretchr/testify/require"
 	"math/big"
 	"testing"

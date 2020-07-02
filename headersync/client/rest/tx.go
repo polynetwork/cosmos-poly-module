@@ -36,7 +36,7 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 // SendReq defines the properties of a send request's body.
 type SyncHeadersReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
-	Headers [][]byte     `json:"headers" yaml:"headers"`
+	Headers []string     `json:"headers" yaml:"headers"`
 }
 
 func SyncHeadersRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {

@@ -19,7 +19,7 @@ package types
 
 import (
 	"fmt"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
+	polycommon "github.com/polynetwork/poly/common"
 )
 
 type ToBTCArgs struct {
