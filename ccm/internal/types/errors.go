@@ -20,8 +20,9 @@ package types
 
 import (
 	"fmt"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"reflect"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 var (

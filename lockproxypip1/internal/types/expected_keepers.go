@@ -19,17 +19,19 @@ package types // noalias
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	"github.com/cosmos/cosmos-sdk/x/supply/exported"
 	supplyexported "github.com/cosmos/cosmos-sdk/x/supply/exported"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
-	polytype "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/core/types"
 )
 
-// SupplyKeeper defines the expected supply keeper
-type HeaderSyncKeeper interface {
-	ProcessHeader(ctx sdk.Context, header *polytype.Header) error
-	GetHeaderByHeight(ctx sdk.Context, chainId uint64, height uint32) (*polytype.Header, error)
-	GetHeaderByHash(ctx sdk.Context, chainId uint64, hash polycommon.Uint256) (*polytype.Header, error)
-	GetCurrentHeight(ctx sdk.Context, chainId uint64) (uint32, error)
+type AccountKeeper interface {
+	NewAccountWithAddress(ctx sdk.Context, addr sdk.AccAddress) authexported.Account
+
+	GetAccount(ctx sdk.Context, addr sdk.AccAddress) authexported.Account
+	GetAllAccounts(ctx sdk.Context) []authexported.Account
+	SetAccount(ctx sdk.Context, acc authexported.Account)
+
+	IterateAccounts(ctx sdk.Context, process func(authexported.Account) bool)
 }
 
 // SupplyKeeper defines the expected supply keeper
@@ -37,21 +39,20 @@ type SupplyKeeper interface {
 	GetModuleAddress(name string) sdk.AccAddress
 	GetModuleAccount(ctx sdk.Context, name string) supplyexported.ModuleAccountI
 	// TODO remove with genesis 2-phases refactor https://github.com/cosmos/cosmos-sdk/issues/2862
-	SetModuleAccount(sdk.Context, supplyexported.ModuleAccountI)
+	SetModuleAccount(sdk.Context, exported.ModuleAccountI)
 
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
 	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
-	SetSupply(ctx sdk.Context, supply supplyexported.SupplyI)
-	GetSupply(ctx sdk.Context) (supply supplyexported.SupplyI)
+	SetSupply(ctx sdk.Context, supply exported.SupplyI)
+	GetSupply(ctx sdk.Context) (supply exported.SupplyI)
 }
 
-type UnlockKeeper interface {
-	Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk.AccAddress, toContractAddr []byte, argsBs []byte) error
-	ContainToContractAddr(ctx sdk.Context, toContractAddr []byte, fromChainId uint64) bool
-}
-
-type AssetKeeper interface {
-	RegisterAsset(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk.AccAddress, toContractAddr []byte, argsBs []byte) error
+type CrossChainManager interface {
+	CreateCrossChainTx(ctx sdk.Context, fromAddr sdk.AccAddress, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
+	SetDenomCreator(ctx sdk.Context, denom string, creator sdk.AccAddress)
+	GetDenomCreator(ctx sdk.Context, denom string) sdk.AccAddress
+	ExistDenom(ctx sdk.Context, denom string) (string, bool)
+	GetChainId(ctx sdk.Context) uint64
 }
