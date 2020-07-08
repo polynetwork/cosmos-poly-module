@@ -19,18 +19,21 @@ package types
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/polynetwork/cosmos-poly-module/common"
 	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
-	"math/big"
 )
 
 type TxArgs struct {
-	ToAssetHash []byte
-	ToAddress   []byte
-	Amount      *big.Int
+	FromAssetHash []byte
+	ToAssetHash   []byte
+	ToAddress     []byte
+	Amount        *big.Int
 }
 
 func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) error {
+	sink.WriteVarBytes(this.FromAssetHash)
 	sink.WriteVarBytes(this.ToAssetHash)
 	sink.WriteVarBytes(this.ToAddress)
 	paddedAmountBs, err := common.Pad32Bytes(this.Amount, intLen)
@@ -42,9 +45,13 @@ func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) err
 }
 
 func (this *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen int) error {
-	txHash, eof := source.NextVarBytes()
+	fromAssetHash, eof := source.NextVarBytes()
 	if eof {
-		return fmt.Errorf("TxArgs deserialize txHash error")
+		return fmt.Errorf("TxArgs deserialize fromAssetHash error")
+	}
+	toAssetHash, eof := source.NextVarBytes()
+	if eof {
+		return fmt.Errorf("TxArgs deserialize toAssetHash error")
 	}
 	toAddress, eof := source.NextVarBytes()
 	if eof {
@@ -59,7 +66,8 @@ func (this *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen in
 		return fmt.Errorf("TxArgs Deserialization error:%v", err)
 	}
 
-	this.ToAssetHash = txHash
+	this.FromAssetHash = fromAssetHash
+	this.ToAssetHash = toAssetHash
 	this.ToAddress = toAddress
 	this.Amount = amount
 	return nil

@@ -191,9 +191,10 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 	// get target asset hash from storage
 	sink := polycommon.NewZeroCopySink(nil)
 	args := types.TxArgs{
-		ToAssetHash: toChainAssetHash,
-		ToAddress:   toAddressBs,
-		Amount:      value.BigInt(),
+		FromAssetHash: []byte(sourceAssetDenom),
+		ToAssetHash:   toChainAssetHash,
+		ToAddress:     toAddressBs,
+		Amount:        value.BigInt(),
 	}
 	if err := args.Serialization(sink, 32); err != nil {
 		return types.ErrLock(fmt.Sprintf("TxArgs Serialization Error:%v", err))
@@ -228,26 +229,21 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 }
 
 func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk.AccAddress, toContractAddr []byte, argsBs []byte) error {
-	fromProxyHash := k.GetProxyHash(ctx, toContractAddr, fromChainId)
-	if len(fromProxyHash) == 0 {
-		return types.ErrUnLock(fmt.Sprintf("the proxyHash is empty with chainId: %d", fromChainId))
-	}
-	if !bytes.Equal(fromProxyHash, fromContractAddr) {
-		return types.ErrUnLock(fmt.Sprintf("stored proxyHash correlated with lockproxyHash: %x and chainId: %d is not equal to fromContractAddress, expect:%x, got:%x", toContractAddr, fromChainId, fromProxyHash, fromContractAddr))
-	}
 	args := new(types.TxArgs)
 	if err := args.Deserialization(polycommon.NewZeroCopySource(argsBs), 32); err != nil {
 		return types.ErrUnLock(fmt.Sprintf("unlock, Deserialization args error:%s", err))
 	}
+	fromAssetHash := args.FromAssetHash
 	toAssetHash := args.ToAssetHash
 	toAddress := args.ToAddress
 	amount := args.Amount
 
+	if !k.AssetIsRegistered(ctx, toContractAddr, toAssetHash, fromChainId, fromContractAddr, fromAssetHash) {
+		return types.ErrUnLock(fmt.Sprintf("missing asset registry: toContractAddr: %s, toAssetHash: %s, fromChainId: %d, fromContractAddr: %s, fromAssetHash: %s", string(toContractAddr), toAssetHash, fromChainId, hex.EncodeToString(fromContractAddr), hex.EncodeToString(fromAssetHash)))
+	}
+
 	// to asset hash should be the hex format string of source asset denom name, NOT Module account address
 	toAssetDenom := string(toAssetHash)
-	if len(k.GetAssetHash(ctx, toContractAddr, toAssetDenom, fromChainId)) == 0 {
-		return types.ErrUnLock(fmt.Sprintf("toAssetHash: %x of denom: %s doesnot belong to the current lock proxy hash: %x", toAssetHash, toAssetDenom, toContractAddr))
-	}
 
 	// mint coin of sourceAssetDenom
 	amt := sdk.NewCoins(sdk.NewCoin(toAssetDenom, sdk.NewIntFromBigInt(amount)))
