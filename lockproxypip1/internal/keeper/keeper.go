@@ -123,6 +123,47 @@ func (k Keeper) UpdateRegistry(ctx sdk.Context, lockProxyHash []byte, assetHash 
 	return nil
 }
 
+func (k Keeper) GetBalance(ctx sdk.Context, balanceKey []byte) sdk.Int {
+	store := ctx.KVStore(k.storeKey)
+	currentAmount := sdk.ZeroInt()
+	currentAmountBz := store.Get(balanceKey)
+	if currentAmountBz != nil {
+		err := k.cdc.UnmarshalBinaryLengthPrefixed(currentAmountBz, &currentAmount)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return currentAmount
+}
+
+func (k Keeper) StoreBalance(ctx sdk.Context, balanceKey []byte, newAmount sdk.Int) {
+	store := ctx.KVStore(k.storeKey)
+	newAmountBz, err := k.cdc.MarshalBinaryLengthPrefixed(newAmount)
+	if err != nil {
+		panic(err)
+	}
+	store.Set(balanceKey, newAmountBz)
+}
+
+func (k Keeper) IncreaseBalance(ctx sdk.Context, lockProxyHash []byte, assetHash []byte, nativeChainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte, amount sdk.Int) {
+	balanceKey := GetBalanceKey(lockProxyHash, assetHash, nativeChainId, nativeLockProxyHash, nativeAssetHash)
+	currentAmount := k.GetBalance(ctx, balanceKey)
+	newAmount := currentAmount.Add(amount)
+	k.StoreBalance(ctx, balanceKey, newAmount)
+}
+
+func (k Keeper) DecreaseBalance(ctx sdk.Context, lockProxyHash []byte, assetHash []byte, nativeChainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte, amount sdk.Int) error {
+	balanceKey := GetBalanceKey(lockProxyHash, assetHash, nativeChainId, nativeLockProxyHash, nativeAssetHash)
+	currentAmount := k.GetBalance(ctx, balanceKey)
+	newAmount := currentAmount.Sub(amount)
+	if newAmount.LT(sdk.ZeroInt()) {
+		return types.ErrBalance(fmt.Sprintf("insufficient balance, current balance: %s, decrement balance: %s", currentAmount.String(), amount.String()))
+	}
+	k.StoreBalance(ctx, balanceKey, newAmount)
+	return nil
+}
+
 func (k Keeper) AssetIsRegistered(ctx sdk.Context, lockProxyHash []byte, assetHash []byte, nativeChainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte) bool {
 	store := ctx.KVStore(k.storeKey)
 	key := GetRegistryKey(lockProxyHash, assetHash, nativeChainId, nativeLockProxyHash, nativeAssetHash)
@@ -177,6 +218,9 @@ func (k Keeper) CreateCoinAndDelegateToProxy(ctx sdk.Context, creator sdk.AccAdd
 	if err := k.supplyKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(coin)); err != nil {
 		return types.ErrCreateCoinAndDelegateToProxy(fmt.Sprintf("supplyKeeper.MintCoins Error: %s", err.Error()))
 	}
+
+	k.IncreaseBalance(ctx, lockproxyHash, []byte(coin.Denom), nativeChainId, nativeLockProxyHash, nativeAssetHash, coin.Amount)
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeCreateAndDelegateCoinToProxy,
@@ -189,6 +233,10 @@ func (k Keeper) CreateCoinAndDelegateToProxy(ctx sdk.Context, creator sdk.AccAdd
 }
 
 func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toChainProxyHash []byte, toChainAssetHash []byte, toAddressBs []byte, value sdk.Int) error {
+	if exist := k.EnsureLockProxyExist(ctx, lockProxyHash); !exist {
+		return types.ErrLock(fmt.Sprintf("lockproxy with hash: %s not created", lockProxyHash))
+	}
+
 	// send coin of sourceAssetDenom from fromAddress to module account address
 	amt := sdk.NewCoins(sdk.NewCoin(sourceAssetDenom, value))
 	if err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, fromAddress, types.ModuleName, amt); err != nil {
@@ -217,6 +265,8 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 	if !k.AssetIsRegistered(ctx, lockProxyHash, []byte(sourceAssetDenom), toChainId, toChainProxyHash, toChainAssetHash) {
 		return types.ErrLock(fmt.Sprintf("missing asset registry: lockProxyHash: %s, denom: %s, toChainId: %d, toChainProxyHash: %s, toChainAssetHash: %s", string(lockProxyHash), sourceAssetDenom, toChainId, hex.EncodeToString(toChainProxyHash), hex.EncodeToString(toChainAssetHash)))
 	}
+
+	k.IncreaseBalance(ctx, lockProxyHash, []byte(sourceAssetDenom), toChainId, toChainProxyHash, toChainAssetHash, value)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -263,6 +313,11 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 	}
 	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, toAcctAddress, amt); err != nil {
 		return types.ErrUnLock(fmt.Sprintf("supplyKeeper.SendCoinsFromModuleToAccount, Error: send coins:%s from Module account:%s to receiver account:%s error", amt.String(), k.GetModuleAccount(ctx).GetAddress().String(), toAcctAddress.String()))
+	}
+
+	err := k.DecreaseBalance(ctx, toContractAddr, toAssetHash, fromChainId, fromContractAddr, fromAssetHash, sdk.NewIntFromBigInt(amount))
+	if err != nil {
+		return err
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{

@@ -33,7 +33,8 @@ const (
 var (
 	OperatorToLockProxyKey = []byte{0x01}
 	BindChainIdPrefix      = []byte{0x02}
-	RegistryPrefix         = []byte{0x05}
+	RegistryPrefix         = []byte{0x03}
+	BalancePrefix          = []byte{0x04}
 )
 
 func GetOperatorToLockProxyKey(operator sdk.AccAddress) []byte {
@@ -44,6 +45,12 @@ func GetRegistryKey(lockProxyHash []byte, assetHash []byte, nativeChainId uint64
 	nativeChainIdBz := make([]byte, 8)
 	binary.LittleEndian.PutUint64(nativeChainIdBz, nativeChainId)
 	return append(append(append(append(append(RegistryPrefix, lockProxyHash...), assetHash...), nativeChainIdBz...), nativeLockProxyHash...), nativeAssetHash...)
+}
+
+func GetBalanceKey(lockProxyHash []byte, assetHash []byte, nativeChainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte) []byte {
+	nativeChainIdBz := make([]byte, 8)
+	binary.LittleEndian.PutUint64(nativeChainIdBz, nativeChainId)
+	return append(append(append(append(append(BalancePrefix, lockProxyHash...), assetHash...), nativeChainIdBz...), nativeLockProxyHash...), nativeAssetHash...)
 }
 
 func GetBindChainIdKey(proxyHash []byte, toChainId uint64) []byte {

@@ -38,6 +38,7 @@ var (
 	ErrCreateCoinAndDelegateToProxyType = sdkerrors.Register(ModuleName, 11, "ErrCreateCoinAndDelegateToProxyType")
 	ErrRegistryAlreadyExistsType        = sdkerrors.Register(ModuleName, 12, "ErrRegistryAlreadyExistsType")
 	ErrRegisterAssetType                = sdkerrors.Register(ModuleName, 13, "ErrRegisterAssetType")
+	ErrBalanceType                      = sdkerrors.Register(ModuleName, 14, "ErrBalanceType")
 )
 
 func ErrInvalidChainId(chainId uint64) error {
@@ -88,4 +89,8 @@ func ErrRegistryAlreadyExists(reason string) error {
 
 func ErrRegisterAsset(reason string) error {
 	return sdkerrors.Wrapf(ErrRegisterAssetType, fmt.Sprintf("Reason: %s", reason))
+}
+
+func ErrBalance(reason string) error {
+	return sdkerrors.Wrapf(ErrBalanceType, fmt.Sprintf("Reason: %s", reason))
 }
