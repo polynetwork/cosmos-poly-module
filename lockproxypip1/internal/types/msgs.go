@@ -19,18 +19,15 @@ package types
 
 import (
 	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"encoding/hex"
 )
 
 // Governance message types and routes
 const (
 	TypeMsgCreateLockProxy              = "create_lock_proxy"
 	TypeMsgCreateCoinAndDelegateToProxy = "create_delegate_to_proxy"
-	TypeMsgBindProxyHash                = "bind_proxy_hash"
-	TypeMsgBindAssetHash                = "bind_asset_hash"
 	TypeMsgLock                         = "lock"
 )
 
@@ -68,24 +65,21 @@ func (msg MsgCreateLockProxy) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-type MsgBindProxyHash struct {
-	Operator         sdk.AccAddress
-	ToChainId        uint64
-	ToChainProxyHash []byte
-}
-
 // MsgSend - high level transaction of the coin module
 type MsgCreateCoinAndDelegateToProxy struct {
-	Creator       sdk.AccAddress
-	Coin          sdk.Coin
-	LockProxyHash []byte
+	Creator             sdk.AccAddress
+	Coin                sdk.Coin
+	LockProxyHash       []byte
+	NativeChainId       uint64
+	NativeLockProxyHash []byte
+	NativeAssetHash     []byte
 }
 
 var _ sdk.Msg = MsgCreateCoinAndDelegateToProxy{}
 
 // NewMsgSend - construct arbitrary multi-in, multi-out send msg.
-func NewMsgCreateCoinAndDelegateToProxy(creator sdk.AccAddress, coin sdk.Coin, lockProxyHash []byte) MsgCreateCoinAndDelegateToProxy {
-	return MsgCreateCoinAndDelegateToProxy{Creator: creator, Coin: coin, LockProxyHash: lockProxyHash}
+func NewMsgCreateCoinAndDelegateToProxy(creator sdk.AccAddress, coin sdk.Coin, lockProxyHash []byte, nativeChainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte) MsgCreateCoinAndDelegateToProxy {
+	return MsgCreateCoinAndDelegateToProxy{Creator: creator, Coin: coin, LockProxyHash: lockProxyHash, NativeChainId: nativeChainId, NativeLockProxyHash: nativeLockProxyHash, NativeAssetHash: nativeAssetHash}
 }
 
 // Route Implements Msg.
@@ -102,6 +96,16 @@ func (msg MsgCreateCoinAndDelegateToProxy) ValidateBasic() error {
 	if !msg.Coin.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, msg.Coin.String())
 	}
+	if msg.NativeChainId == 0 {
+		return ErrInvalidChainId(msg.NativeChainId)
+	}
+	if len(msg.NativeLockProxyHash) == 0 {
+		return ErrCreateCoinAndDelegateToProxy("Empty NativeLockProxyHash")
+	}
+	if len(msg.NativeAssetHash) == 0 {
+		return ErrCreateCoinAndDelegateToProxy("Empty NativeAssetHash")
+	}
+
 	return nil
 }
 
@@ -115,119 +119,19 @@ func (msg MsgCreateCoinAndDelegateToProxy) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func NewMsgBindProxyHash(operator sdk.AccAddress, toChainId uint64, toChainProxyHash []byte) MsgBindProxyHash {
-	return MsgBindProxyHash{operator, toChainId, toChainProxyHash}
-}
-
-//nolint
-func (msg MsgBindProxyHash) Route() string { return RouterKey }
-func (msg MsgBindProxyHash) Type() string  { return TypeMsgBindProxyHash }
-
-// Implements Msg.
-func (msg MsgBindProxyHash) ValidateBasic() error {
-	if msg.Operator.Empty() {
-		return sdkerrors.ErrInvalidAddress
-	}
-	if msg.ToChainId <= 0 {
-		return ErrInvalidChainId(msg.ToChainId)
-	}
-	if len(msg.ToChainProxyHash) == 0 {
-		// Disable software upgrade proposals as they are currently equivalent
-		// to text proposals. Re-enable once a valid software upgrade proposal
-		// handler is implemented.
-		return ErrMsgBindProxyHash("Empty MsgBindProxyHash.ToChainProxyHash")
-	}
-
-	return nil
-}
-
-func (msg MsgBindProxyHash) String() string {
-	return fmt.Sprintf(`MsgBindProxyHash:
-  Operator:       		%s(%x)
-  ToChainId:			%d
-  ToChainProxyHash:     %s
-`, msg.Operator.String(), msg.Operator.Bytes(), msg.ToChainId, hex.EncodeToString(msg.ToChainProxyHash))
-}
-
-// Implements Msg.
-func (msg MsgBindProxyHash) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
-// Implements Msg.
-func (msg MsgBindProxyHash) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Operator}
-}
-
-type MsgBindAssetHash struct {
-	Operator         sdk.AccAddress
-	SourceAssetDenom string
-	ToChainId        uint64
-	ToAssetHash      []byte
-}
-
-func NewMsgBindAssetHash(operator sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toAssetHash []byte) MsgBindAssetHash {
-	return MsgBindAssetHash{operator, sourceAssetDenom, toChainId, toAssetHash}
-}
-
-//nolint
-func (msg MsgBindAssetHash) Route() string { return RouterKey }
-func (msg MsgBindAssetHash) Type() string  { return TypeMsgBindAssetHash }
-
-// Implements Msg.
-func (msg MsgBindAssetHash) ValidateBasic() error {
-	if msg.Operator.Empty() {
-		return sdkerrors.ErrInvalidAddress
-	}
-	if msg.SourceAssetDenom == "" {
-		return ErrMsgBindAssetHash("Empty MsgBindAssetHash.SourceAssetDenom")
-	} else if _, err := sdk.ParseCoin("10" + msg.SourceAssetDenom); err != nil {
-		return ErrMsgBindAssetHash(fmt.Sprintf("Invalid denom: %s", msg.SourceAssetDenom))
-	}
-	if msg.ToChainId <= 0 {
-		return ErrInvalidChainId(msg.ToChainId)
-	}
-	if len(msg.ToAssetHash) == 0 {
-		// Disable software upgrade proposals as they are currently equivalent
-		// to text proposals. Re-enable once a valid software upgrade proposal
-		// handler is implemented.
-		return ErrMsgBindAssetHash("Empty MsgBindAssetHash.ToAssetHash")
-	}
-	return nil
-}
-
-func (msg MsgBindAssetHash) String() string {
-	return fmt.Sprintf(`Bind Proxy Hash Message:
-  Signer:         	%s
-  SourceAssetDenom: %s
-  ToChainId:  		%d
-  ToAssetHash:      %s
-`, msg.Operator.String(), msg.SourceAssetDenom, msg.ToChainId, hex.EncodeToString(msg.ToAssetHash))
-}
-
-// Implements Msg.
-func (msg MsgBindAssetHash) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
-// Implements Msg.
-func (msg MsgBindAssetHash) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{msg.Operator}
-}
-
 type MsgLock struct {
 	LockProxyHash    []byte
 	FromAddress      sdk.AccAddress
 	SourceAssetDenom string
 	ToChainId        uint64
+	ToChainProxyHash []byte
+	ToChainAssetHash []byte
 	ToAddressBs      []byte
 	Value            sdk.Int
 }
 
-func NewMsgLock(lockProxyHash []byte, fromAddress sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toAddress []byte, value sdk.Int) MsgLock {
-	return MsgLock{lockProxyHash, fromAddress, sourceAssetDenom, toChainId, toAddress, value}
+func NewMsgLock(lockProxyHash []byte, fromAddress sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toChainProxyHash []byte, toChainAssetHash []byte, toAddress []byte, value sdk.Int) MsgLock {
+	return MsgLock{lockProxyHash, fromAddress, sourceAssetDenom, toChainId, toChainProxyHash, toChainAssetHash, toAddress, value}
 }
 
 //nolint
@@ -247,6 +151,12 @@ func (msg MsgLock) ValidateBasic() error {
 	}
 	if msg.ToChainId <= 0 {
 		return ErrInvalidChainId(msg.ToChainId)
+	}
+	if len(msg.ToChainProxyHash) == 0 {
+		return ErrMsgLock("empty ToChainProxyHash")
+	}
+	if len(msg.ToChainAssetHash) == 0 {
+		return ErrMsgLock("empty ToChainAssetHash")
 	}
 	if len(msg.ToAddressBs) == 0 {
 		// Disable software upgrade proposals as they are currently equivalent

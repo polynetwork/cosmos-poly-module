@@ -26,9 +26,8 @@ import (
 	"github.com/polynetwork/cosmos-poly-module/lockproxypip1/internal/types"
 )
 
-// QueryDelegatorTotalRewards queries delegator total rewards.
+// QueryProxyByOperator get proxy for operator.
 func QueryProxyByOperator(cliCtx context.CLIContext, queryRoute string, operator sdk.AccAddress) ([]byte, error) {
-
 	res, _, err := cliCtx.QueryWithData(
 		fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryProxyByOperator),
 		cliCtx.Codec.MustMarshalJSON(types.NewQueryProxyByOperatorParam(operator)),
@@ -36,21 +35,11 @@ func QueryProxyByOperator(cliCtx context.CLIContext, queryRoute string, operator
 	return res, err
 }
 
-// QueryDelegatorTotalRewards queries delegator total rewards.
-func QueryProxyHash(cliCtx context.CLIContext, queryRoute string, lockProxyHash []byte, chainId uint64) ([]byte, error) {
-
+// QueryRegistry queries the registry.
+func QueryRegistry(cliCtx context.CLIContext, queryRoute string, lockProxyHash []byte, assetHash []byte, chainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte) ([]byte, error) {
 	res, _, err := cliCtx.QueryWithData(
-		fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryProxyHash),
-		cliCtx.Codec.MustMarshalJSON(types.NewQueryProxyHashParam(lockProxyHash, chainId)),
-	)
-	return res, err
-}
-
-func QueryAssetHash(cliCtx context.CLIContext, queryRoute string, lockProxy []byte, sourceAssetDenom string, chainId uint64) ([]byte, error) {
-
-	res, _, err := cliCtx.QueryWithData(
-		fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryAssetHash),
-		cliCtx.Codec.MustMarshalJSON(types.NewQueryAssetHashParam(lockProxy, sourceAssetDenom, chainId)),
+		fmt.Sprintf("custom/%s/%s", queryRoute, types.QueryRegistry),
+		cliCtx.Codec.MustMarshalJSON(types.NewQueryRegistryParam(lockProxyHash, assetHash, chainId, nativeLockProxyHash, nativeAssetHash)),
 	)
 	return res, err
 }

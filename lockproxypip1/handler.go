@@ -33,10 +33,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 			return handleMsgCreateLockProxy(ctx, k, msg)
 		case types.MsgCreateCoinAndDelegateToProxy:
 			return handleMsgCreateCoinAndDelegateToProxy(ctx, k, msg)
-		case types.MsgBindProxyHash:
-			return handleMsgBindProxyHash(ctx, k, msg)
-		case types.MsgBindAssetHash:
-			return handleMsgBindAssetHash(ctx, k, msg)
 		case types.MsgLock:
 			return handleMsgLock(ctx, k, msg)
 		default:
@@ -46,9 +42,6 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 }
 
 func handleMsgCreateLockProxy(ctx sdk.Context, k keeper.Keeper, msg types.MsgCreateLockProxy) (*sdk.Result, error) {
-
-	//err := k.SendCoins(ctx, msg.FromAddress, msg.ToAddress, msg.Amount)
-
 	err := k.CreateLockProxy(ctx, msg.Creator)
 	if err != nil {
 		return nil, err
@@ -64,8 +57,7 @@ func handleMsgCreateLockProxy(ctx sdk.Context, k keeper.Keeper, msg types.MsgCre
 }
 
 func handleMsgCreateCoinAndDelegateToProxy(ctx sdk.Context, k keeper.Keeper, msg types.MsgCreateCoinAndDelegateToProxy) (*sdk.Result, error) {
-
-	if err := k.CreateCoinAndDelegateToProxy(ctx, msg.Creator, msg.Coin, msg.LockProxyHash); err != nil {
+	if err := k.CreateCoinAndDelegateToProxy(ctx, msg.Creator, msg.Coin, msg.LockProxyHash, msg.NativeChainId, msg.NativeLockProxyHash, msg.NativeAssetHash); err != nil {
 		return nil, err
 	}
 
@@ -76,41 +68,11 @@ func handleMsgCreateCoinAndDelegateToProxy(ctx sdk.Context, k keeper.Keeper, msg
 		),
 	)
 
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
-}
-
-func handleMsgBindProxyHash(ctx sdk.Context, k keeper.Keeper, msg types.MsgBindProxyHash) (*sdk.Result, error) {
-	if err := k.BindProxyHash(ctx, msg.Operator, msg.ToChainId, msg.ToChainProxyHash); err != nil {
-		return nil, err
-	}
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-		),
-	)
-	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
-}
-
-func handleMsgBindAssetHash(ctx sdk.Context, k keeper.Keeper, msg types.MsgBindAssetHash) (*sdk.Result, error) {
-
-	err := k.BindAssetHash(ctx, msg.Operator, msg.SourceAssetDenom, msg.ToChainId, msg.ToAssetHash)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-		),
-	)
 	return &sdk.Result{Events: ctx.EventManager().Events()}, nil
 }
 
 func handleMsgLock(ctx sdk.Context, k keeper.Keeper, msg types.MsgLock) (*sdk.Result, error) {
-
-	err := k.Lock(ctx, msg.LockProxyHash, msg.FromAddress, msg.SourceAssetDenom, msg.ToChainId, msg.ToAddressBs, msg.Value)
+	err := k.Lock(ctx, msg.LockProxyHash, msg.FromAddress, msg.SourceAssetDenom, msg.ToChainId, msg.ToChainProxyHash, msg.ToChainAssetHash, msg.ToAddressBs, msg.Value)
 	if err != nil {
 		return nil, err
 	}

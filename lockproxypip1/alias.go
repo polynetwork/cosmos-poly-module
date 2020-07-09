@@ -68,35 +68,21 @@ var (
 	NewQuerier                         = keeper.NewQuerier
 	NewMsgCreateCoinAndDelegateToProxy = types.NewMsgCreateCoinAndDelegateToProxy
 
-	NewMsgBindAssetHash    = types.NewMsgBindAssetHash
-	NewMsgBindProxyHash    = types.NewMsgBindProxyHash
-	NewMsgLock             = types.NewMsgLock
-	NewQueryProxyHashParam = types.NewQueryProxyHashParam
-	NewQueryAssetHashParam = types.NewQueryAssetHashParam
-	GetBindProxyKey        = keeper.GetBindProxyKey
-	GetCrossedAmountKey    = keeper.GetCrossedAmountKey
-	NewMsgCreateLockProxy  = types.NewMsgCreateLockProxy
+	NewMsgLock            = types.NewMsgLock
+	NewMsgCreateLockProxy = types.NewMsgCreateLockProxy
 	// variable aliases
 	ModuleCdc         = types.ModuleCdc
 	OperatorKey       = types.OperatorKey
 	ErrInvalidChainId = types.ErrInvalidChainId
 
-	BindProxyPrefix     = keeper.BindProxyPrefix
-	BindAssetPrefix     = keeper.BindAssetPrefix
-	CrossedAmountPrefix = keeper.CrossedAmountPrefix
-
 	// query balance path
 	QueryProxyByOperator = types.QueryProxyByOperator
-	QueryProxyHash       = types.QueryProxyHash
-	QueryAssetHash       = types.QueryAssetHash
 )
 
 type (
 	Keeper                          = keeper.Keeper
 	MsgCreateLockProxy              = types.MsgCreateLockProxy
 	MsgCreateCoinAndDelegateToProxy = types.MsgCreateCoinAndDelegateToProxy
-	MsgBindProxyHash                = types.MsgBindProxyHash
-	MsgBindAssetHash                = types.MsgBindAssetHash
 	MsgLock                         = types.MsgLock
 
 	TxArgs       = types.TxArgs

@@ -72,7 +72,7 @@ func (k Keeper) EnsureAccountExist(ctx sdk.Context, addr sdk.AccAddress) error {
 }
 
 func (k Keeper) ContainToContractAddr(ctx sdk.Context, toContractAddr []byte, fromChainId uint64) bool {
-	return ctx.KVStore(k.storeKey).Get((GetBindProxyKey(toContractAddr, fromChainId))) != nil
+	return ctx.KVStore(k.storeKey).Get((GetBindChainIdKey(toContractAddr, fromChainId))) != nil
 }
 
 func (k Keeper) CreateLockProxy(ctx sdk.Context, creator sdk.AccAddress) error {
@@ -110,9 +110,16 @@ func (k Keeper) UpdateRegistry(ctx sdk.Context, lockProxyHash []byte, assetHash 
 	if k.AssetIsRegistered(ctx, lockProxyHash, assetHash, nativeChainId, nativeLockProxyHash, nativeAssetHash) {
 		return types.ErrRegistryAlreadyExists(fmt.Sprintf("asset already registered %x, %d, %x, %x", assetHash, nativeChainId, nativeLockProxyHash, nativeAssetHash))
 	}
+
 	store := ctx.KVStore(k.storeKey)
-	key := GetRegistryKey(lockProxyHash, assetHash, nativeChainId, nativeLockProxyHash, nativeAssetHash)
-	store.Set(key, []byte("1"))
+	registryKey := GetRegistryKey(lockProxyHash, assetHash, nativeChainId, nativeLockProxyHash, nativeAssetHash)
+	store.Set(registryKey, []byte("1"))
+
+	bindChainIdKey := GetBindChainIdKey(lockProxyHash, nativeChainId)
+	if store.Get(bindChainIdKey) == nil {
+		store.Set(bindChainIdKey, []byte("1"))
+	}
+
 	return nil
 }
 

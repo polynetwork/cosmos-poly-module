@@ -23,8 +23,7 @@ import (
 
 const (
 	QueryProxyByOperator = "query_proxy_by_operator"
-	QueryProxyHash       = "proxy_hash"
-	QueryAssetHash       = "asset_hash"
+	QueryRegistry        = "registry"
 )
 
 // QueryBalanceParams defines the params for querying an account balance.
@@ -38,22 +37,15 @@ func NewQueryProxyByOperatorParam(operator sdk.AccAddress) QueryProxyByOperatorP
 }
 
 // QueryBalanceParams defines the params for querying an account balance.
-type QueryProxyHashParam struct {
-	LockProxyHash []byte
-	ChainId       uint64
+type QueryRegistryParam struct {
+	LockProxyHash       []byte
+	AssetHash           []byte
+	NativeChainId       uint64
+	NativeLockProxyHash []byte
+	NativeAssetHash     []byte
 }
 
-// NewQueryBalanceParams creates a new instance of QueryBalanceParams.
-func NewQueryProxyHashParam(lockProxyHash []byte, chainId uint64) QueryProxyHashParam {
-	return QueryProxyHashParam{lockProxyHash, chainId}
-}
-
-type QueryAssetHashParam struct {
-	LockProxyHash    []byte
-	SourceAssetDenom string
-	ChainId          uint64
-}
-
-func NewQueryAssetHashParam(lockProxyHash []byte, sourceAssetDenom string, chainId uint64) QueryAssetHashParam {
-	return QueryAssetHashParam{LockProxyHash: lockProxyHash, SourceAssetDenom: sourceAssetDenom, ChainId: chainId}
+// NewQueryRegistryParam creates a new instance of QueryRegistryParam.
+func NewQueryRegistryParam(lockProxyHash []byte, assetHash []byte, chainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte) QueryRegistryParam {
+	return QueryRegistryParam{lockProxyHash, assetHash, chainId, nativeLockProxyHash, nativeAssetHash}
 }

@@ -33,10 +33,8 @@ func NewQuerier(k Keeper) sdk.Querier {
 		switch path[0] {
 		case types.QueryProxyByOperator:
 			return queryProxyByOperator(ctx, req, k)
-		case types.QueryProxyHash:
-			return queryProxyHash(ctx, req, k)
-		case types.QueryAssetHash:
-			return queryAssetHash(ctx, req, k)
+		case types.QueryRegistry:
+			return queryRegistry(ctx, req, k)
 		default:
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown query path: %s", path[0])
 		}
@@ -61,34 +59,21 @@ func queryProxyByOperator(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]b
 	return bz, nil
 }
 
-func queryProxyHash(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
-	var params types.QueryProxyHashParam
+func queryRegistry(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
+	var params types.QueryRegistryParam
 
 	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONUnmarshal, "failed to parse params: %s", err)
 	}
-	proxyHashBs := k.GetProxyHash(ctx, params.LockProxyHash, params.ChainId)
-	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, proxyHashBs)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONMarshal, "could not marshal toChain proxyHash: %x to JSON", proxyHashBs)
+
+	isRegistered := k.AssetIsRegistered(ctx, params.LockProxyHash, params.AssetHash, params.NativeChainId, params.NativeLockProxyHash, params.NativeAssetHash)
+	result := "unregistered"
+	if isRegistered {
+		result = "registered"
 	}
-
-	return bz, nil
-}
-
-func queryAssetHash(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, error) {
-	var params types.QueryAssetHashParam
-
-	if err := types.ModuleCdc.UnmarshalJSON(req.Data, &params); err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONUnmarshal, "failed to parse params: %s", err)
-	}
-	assetHashBs := k.GetAssetHash(ctx, params.LockProxyHash, params.SourceAssetDenom, params.ChainId)
-	//if assetHashBs == nil {
-	//	return nil, sdk.ErrInternal(fmt.Sprintf("queryAssetHash, there is no toChainAssetHash with chainId:%d correlated with sourceAssetDenom:%s in lockproxy contract:%x", params.ChainId, params.SourceAssetDenom, params.LockProxyHash))
-	//}
-	bz, err := codec.MarshalJSONIndent(types.ModuleCdc, assetHashBs)
-	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONMarshal, "could not marshal toChain assetHash: %x of denom: %s and chainId: %d in lockProxy: %x to JSON", assetHashBs, params.SourceAssetDenom, params.ChainId, params.LockProxyHash)
+	bz, e := codec.MarshalJSONIndent(types.ModuleCdc, result)
+	if e != nil {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrJSONMarshal, "could not marshal result", result)
 	}
 
 	return bz, nil

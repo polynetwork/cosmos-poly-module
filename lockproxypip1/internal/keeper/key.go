@@ -32,9 +32,7 @@ const (
 
 var (
 	OperatorToLockProxyKey = []byte{0x01}
-	BindProxyPrefix        = []byte{0x02}
-	BindAssetPrefix        = []byte{0x03}
-	CrossedAmountPrefix    = []byte{0x04}
+	BindChainIdPrefix      = []byte{0x02}
 	RegistryPrefix         = []byte{0x05}
 )
 
@@ -48,18 +46,8 @@ func GetRegistryKey(lockProxyHash []byte, assetHash []byte, nativeChainId uint64
 	return append(append(append(append(append(RegistryPrefix, lockProxyHash...), assetHash...), nativeChainIdBz...), nativeLockProxyHash...), nativeAssetHash...)
 }
 
-func GetBindProxyKey(proxyHash []byte, toChainId uint64) []byte {
+func GetBindChainIdKey(proxyHash []byte, toChainId uint64) []byte {
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, toChainId)
-	return append(append(BindProxyPrefix, proxyHash...), b...)
-}
-
-func GetBindAssetHashKey(lockProxyHash []byte, sourceAssetHash []byte, targetChainId uint64) []byte {
-	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b, targetChainId)
-	return append(append(append(BindAssetPrefix, lockProxyHash...), sourceAssetHash...), b...)
-}
-
-func GetCrossedAmountKey(sourceAssetHash []byte) []byte {
-	return append(CrossedAmountPrefix, sourceAssetHash...)
+	return append(append(BindChainIdPrefix, proxyHash...), b...)
 }

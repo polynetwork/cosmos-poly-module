@@ -27,8 +27,6 @@ var ModuleCdc *codec.Codec
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgCreateLockProxy{}, ModuleName+"/MsgCreateLockProxy", nil)
 	cdc.RegisterConcrete(MsgCreateCoinAndDelegateToProxy{}, ModuleName+"/MsgCreateCoinAndDelegateToProxy", nil)
-	cdc.RegisterConcrete(MsgBindProxyHash{}, ModuleName+"/MsgBindProxyHash", nil)
-	cdc.RegisterConcrete(MsgBindAssetHash{}, ModuleName+"/MsgBindAssetHash", nil)
 	cdc.RegisterConcrete(MsgLock{}, ModuleName+"/MsgLock", nil)
 }
 
