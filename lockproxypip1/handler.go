@@ -72,7 +72,7 @@ func handleMsgCreateCoinAndDelegateToProxy(ctx sdk.Context, k keeper.Keeper, msg
 }
 
 func handleMsgLock(ctx sdk.Context, k keeper.Keeper, msg types.MsgLock) (*sdk.Result, error) {
-	err := k.Lock(ctx, msg.LockProxyHash, msg.FromAddress, msg.SourceAssetDenom, msg.ToChainId, msg.ToChainProxyHash, msg.ToChainAssetHash, msg.ToAddressBs, msg.Value)
+	err := k.Lock(ctx, msg.LockProxyHash, msg.FromAddress, msg.SourceAssetDenom, msg.ToChainId, msg.ToChainProxyHash, msg.ToChainAssetHash, msg.ToAddressBs, msg.Value, msg.DeductFeeInLock, msg.FeeAmount, msg.FeeAddress)
 	if err != nil {
 		return nil, err
 	}

@@ -34,6 +34,10 @@ type AccountKeeper interface {
 	IterateAccounts(ctx sdk.Context, process func(authexported.Account) bool)
 }
 
+type BankKeeper interface {
+	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
+}
+
 // SupplyKeeper defines the expected supply keeper
 type SupplyKeeper interface {
 	GetModuleAddress(name string) sdk.AccAddress

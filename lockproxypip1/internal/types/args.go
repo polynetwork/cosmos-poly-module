@@ -30,6 +30,8 @@ type TxArgs struct {
 	ToAssetHash   []byte
 	ToAddress     []byte
 	Amount        *big.Int
+	FeeAmount     *big.Int
+	FeeAddress    []byte
 }
 
 func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) error {
@@ -41,6 +43,12 @@ func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) err
 		return fmt.Errorf("TxArgs Serialization error:%v", err)
 	}
 	sink.WriteBytes(paddedAmountBs)
+	paddedFeeAmountBs, err := common.Pad32Bytes(this.FeeAmount, intLen)
+	if err != nil {
+		return fmt.Errorf("TxArgs Serialization error:%v", err)
+	}
+	sink.WriteBytes(paddedFeeAmountBs)
+	sink.WriteVarBytes(this.FeeAddress)
 	return nil
 }
 
@@ -65,10 +73,24 @@ func (this *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen in
 	if err != nil {
 		return fmt.Errorf("TxArgs Deserialization error:%v", err)
 	}
+	paddedFeeAmountBs, eof := source.NextBytes(uint64(intLen))
+	if eof {
+		return fmt.Errorf("TxArgs deserialize FeeAmount error")
+	}
+	feeAmount, err := common.Unpad32Bytes(paddedFeeAmountBs, intLen)
+	if err != nil {
+		return fmt.Errorf("TxArgs Deserialization error:%v", err)
+	}
+	feeAddress, eof := source.NextVarBytes()
+	if eof {
+		return fmt.Errorf("TxArgs deserialize FeeAddress error")
+	}
 
 	this.FromAssetHash = fromAssetHash
 	this.ToAssetHash = toAssetHash
 	this.ToAddress = toAddress
 	this.Amount = amount
+	this.FeeAmount = feeAmount
+	this.FeeAddress = feeAddress
 	return nil
 }

@@ -128,10 +128,13 @@ type MsgLock struct {
 	ToChainAssetHash []byte
 	ToAddressBs      []byte
 	Value            sdk.Int
+	DeductFeeInLock  bool
+	FeeAmount        sdk.Int
+	FeeAddress       sdk.AccAddress
 }
 
-func NewMsgLock(lockProxyHash []byte, fromAddress sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toChainProxyHash []byte, toChainAssetHash []byte, toAddress []byte, value sdk.Int) MsgLock {
-	return MsgLock{lockProxyHash, fromAddress, sourceAssetDenom, toChainId, toChainProxyHash, toChainAssetHash, toAddress, value}
+func NewMsgLock(lockProxyHash []byte, fromAddress sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toChainProxyHash []byte, toChainAssetHash []byte, toAddress []byte, value sdk.Int, deductFeeInLock bool, feeAmount sdk.Int, feeAddress sdk.AccAddress) MsgLock {
+	return MsgLock{lockProxyHash, fromAddress, sourceAssetDenom, toChainId, toChainProxyHash, toChainAssetHash, toAddress, value, deductFeeInLock, feeAmount, feeAddress}
 }
 
 //nolint
@@ -166,6 +169,12 @@ func (msg MsgLock) ValidateBasic() error {
 	}
 	if msg.Value.IsNegative() {
 		return ErrMsgLock(fmt.Sprintf("MsgLock.Value: %s should not be negative", msg.Value.String()))
+	}
+	if msg.FeeAmount.LT(sdk.ZeroInt()) {
+		return ErrMsgLock(fmt.Sprintf("MsgLock.FeeAmount: %s should not be negative", msg.FeeAmount.String()))
+	}
+	if msg.FeeAddress.Empty() {
+		return sdkerrors.ErrInvalidAddress
 	}
 	return nil
 }

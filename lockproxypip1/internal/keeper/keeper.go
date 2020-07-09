@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -36,6 +37,7 @@ type Keeper struct {
 	cdc          *codec.Codec
 	storeKey     sdk.StoreKey
 	authKeeper   types.AccountKeeper
+	bankKeeper   types.BankKeeper
 	supplyKeeper types.SupplyKeeper
 	ccmKeeper    types.CrossChainManager
 	selfexported.UnlockKeeper
@@ -43,7 +45,7 @@ type Keeper struct {
 
 // NewKeeper creates a new mint Keeper instance
 func NewKeeper(
-	cdc *codec.Codec, key sdk.StoreKey, ak types.AccountKeeper, supplyKeeper types.SupplyKeeper, ccmKeeper types.CrossChainManager) Keeper {
+	cdc *codec.Codec, key sdk.StoreKey, ak types.AccountKeeper, bk types.BankKeeper, supplyKeeper types.SupplyKeeper, ccmKeeper types.CrossChainManager) Keeper {
 
 	// ensure mint module account is set
 	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr == nil {
@@ -54,6 +56,7 @@ func NewKeeper(
 		cdc:          cdc,
 		storeKey:     key,
 		authKeeper:   ak,
+		bankKeeper:   bk,
 		supplyKeeper: supplyKeeper,
 		ccmKeeper:    ccmKeeper,
 	}
@@ -232,25 +235,45 @@ func (k Keeper) CreateCoinAndDelegateToProxy(ctx sdk.Context, creator sdk.AccAdd
 	return nil
 }
 
-func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toChainProxyHash []byte, toChainAssetHash []byte, toAddressBs []byte, value sdk.Int) error {
+func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toChainProxyHash []byte, toChainAssetHash []byte, toAddressBs []byte, value sdk.Int, deductFeeInLock bool, feeAmount sdk.Int, feeAddress []byte) error {
 	if exist := k.EnsureLockProxyExist(ctx, lockProxyHash); !exist {
 		return types.ErrLock(fmt.Sprintf("lockproxy with hash: %s not created", lockProxyHash))
 	}
 
-	// send coin of sourceAssetDenom from fromAddress to module account address
-	amt := sdk.NewCoins(sdk.NewCoin(sourceAssetDenom, value))
-	if err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, fromAddress, types.ModuleName, amt); err != nil {
-		return types.ErrLock(fmt.Sprintf("supplyKeeper.SendCoinsFromAccountToModule Error: from: %s, moduleAccount: %s of moduleName: %s, amount: %s", fromAddress.String(), k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress(), types.ModuleName, amt.String()))
-	}
-
-	// get target asset hash from storage
-	sink := polycommon.NewZeroCopySink(nil)
 	args := types.TxArgs{
 		FromAssetHash: []byte(sourceAssetDenom),
 		ToAssetHash:   toChainAssetHash,
 		ToAddress:     toAddressBs,
 		Amount:        value.BigInt(),
+		FeeAmount:     feeAmount.BigInt(),
+		FeeAddress:    feeAddress,
 	}
+
+	if deductFeeInLock && feeAmount.GT(sdk.ZeroInt()) {
+		feeAddressAcc := sdk.AccAddress(args.FeeAddress)
+		if feeAddressAcc.Empty() {
+			return types.ErrLock("FeeAmount is present but FeeAddress is empty")
+		}
+
+		afterFeeAmount := value.Sub(feeAmount)
+		if feeAmount.GT(value) {
+			return types.ErrLock(fmt.Sprintf("feeAmount %s is greater than value %s", feeAmount.String(), value.String()))
+		}
+		feeCoins := sdk.NewCoins(sdk.NewCoin(sourceAssetDenom, feeAmount))
+		k.bankKeeper.SendCoins(ctx, fromAddress, feeAddress, feeCoins)
+
+		args.Amount = afterFeeAmount.BigInt()
+		args.FeeAmount = big.NewInt(0)
+	}
+
+	// send coin of sourceAssetDenom from fromAddress to module account address
+	amountCoins := sdk.NewCoins(sdk.NewCoin(sourceAssetDenom, value))
+	if err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, fromAddress, types.ModuleName, amountCoins); err != nil {
+		return types.ErrLock(fmt.Sprintf("supplyKeeper.SendCoinsFromAccountToModule Error: from: %s, moduleAccount: %s of moduleName: %s, amount: %s", fromAddress.String(), k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress(), types.ModuleName, amountCoins.String()))
+	}
+
+	// get target asset hash from storage
+	sink := polycommon.NewZeroCopySink(nil)
 	if err := args.Serialization(sink, 32); err != nil {
 		return types.ErrLock(fmt.Sprintf("TxArgs Serialization Error:%v", err))
 	}
@@ -258,8 +281,8 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 	if err := k.ccmKeeper.CreateCrossChainTx(ctx, fromAddress, toChainId, fromContractHash, toChainProxyHash, "unlock", sink.Bytes()); err != nil {
 		return types.ErrLock(fmt.Sprintf("ccmKeeper.CreateCrossChainTx Error: toChainId: %d, fromContractHash: %x, toChainProxyHash: %x, args: %x", toChainId, fromContractHash, toChainProxyHash, args))
 	}
-	if amt.AmountOf(sourceAssetDenom).IsNegative() {
-		return types.ErrLock(fmt.Sprintf("the coin being crossed has negative amount value, coin:%s", amt.String()))
+	if amountCoins.AmountOf(sourceAssetDenom).IsNegative() {
+		return types.ErrLock(fmt.Sprintf("the coin being crossed has negative amount value, coin:%s", amountCoins.String()))
 	}
 
 	if !k.AssetIsRegistered(ctx, lockProxyHash, []byte(sourceAssetDenom), toChainId, toChainProxyHash, toChainAssetHash) {
@@ -293,7 +316,8 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 	fromAssetHash := args.FromAssetHash
 	toAssetHash := args.ToAssetHash
 	toAddress := args.ToAddress
-	amount := args.Amount
+	amount := sdk.NewIntFromBigInt(args.Amount)
+	feeAmount := sdk.NewIntFromBigInt(args.FeeAmount)
 
 	if !k.AssetIsRegistered(ctx, toContractAddr, toAssetHash, fromChainId, fromContractAddr, fromAssetHash) {
 		return types.ErrUnLock(fmt.Sprintf("missing asset registry: toContractAddr: %s, toAssetHash: %s, fromChainId: %d, fromContractAddr: %s, fromAssetHash: %s", string(toContractAddr), toAssetHash, fromChainId, hex.EncodeToString(fromContractAddr), hex.EncodeToString(fromAssetHash)))
@@ -302,20 +326,39 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 	// to asset hash should be the hex format string of source asset denom name, NOT Module account address
 	toAssetDenom := string(toAssetHash)
 
-	// mint coin of sourceAssetDenom
-	amt := sdk.NewCoins(sdk.NewCoin(toAssetDenom, sdk.NewIntFromBigInt(amount)))
-
 	toAcctAddress := make(sdk.AccAddress, len(toAddress))
 	copy(toAcctAddress, toAddress)
 
 	if err := k.EnsureAccountExist(ctx, toAddress); err != nil {
 		return err
 	}
-	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, toAcctAddress, amt); err != nil {
-		return types.ErrUnLock(fmt.Sprintf("supplyKeeper.SendCoinsFromModuleToAccount, Error: send coins:%s from Module account:%s to receiver account:%s error", amt.String(), k.GetModuleAccount(ctx).GetAddress().String(), toAcctAddress.String()))
+
+	afterFeeAmount := amount
+	if feeAmount.GT(sdk.ZeroInt()) {
+		if feeAmount.GT(amount) {
+			return types.ErrUnLock(fmt.Sprintf("feeAmount %s is greater than amount %s", feeAmount.String(), amount.String()))
+		}
+
+		feeAddressAcc := sdk.AccAddress(args.FeeAddress)
+		if feeAddressAcc.Empty() {
+			return types.ErrUnLock("FeeAmount is present but FeeAddress is empty")
+		}
+
+		afterFeeAmount = afterFeeAmount.Sub(feeAmount)
+		feeCoins := sdk.NewCoins(sdk.NewCoin(toAssetDenom, feeAmount))
+		if err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, feeAddressAcc, feeCoins); err != nil {
+			return types.ErrUnLock(fmt.Sprintf("supplyKeeper.SendCoinsFromModuleToAccount, Error: send coins:%s from Module account:%s to receiver account:%s error", feeCoins.String(), k.GetModuleAccount(ctx).GetAddress().String(), feeAddressAcc.String()))
+		}
 	}
 
-	err := k.DecreaseBalance(ctx, toContractAddr, toAssetHash, fromChainId, fromContractAddr, fromAssetHash, sdk.NewIntFromBigInt(amount))
+	// mint coin of sourceAssetDenom
+	amountCoins := sdk.NewCoins(sdk.NewCoin(toAssetDenom, afterFeeAmount))
+
+	if err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, toAcctAddress, amountCoins); err != nil {
+		return types.ErrUnLock(fmt.Sprintf("supplyKeeper.SendCoinsFromModuleToAccount, Error: send coins:%s from Module account:%s to receiver account:%s error", amountCoins.String(), k.GetModuleAccount(ctx).GetAddress().String(), toAcctAddress.String()))
+	}
+
+	err := k.DecreaseBalance(ctx, toContractAddr, toAssetHash, fromChainId, fromContractAddr, fromAssetHash, amount)
 	if err != nil {
 		return err
 	}
