@@ -249,16 +249,18 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 		FeeAddress:    feeAddress,
 	}
 
+	afterFeeAmount := value
 	if deductFeeInLock && feeAmount.GT(sdk.ZeroInt()) {
 		feeAddressAcc := sdk.AccAddress(args.FeeAddress)
 		if feeAddressAcc.Empty() {
 			return types.ErrLock("FeeAmount is present but FeeAddress is empty")
 		}
 
-		afterFeeAmount := value.Sub(feeAmount)
 		if feeAmount.GT(value) {
 			return types.ErrLock(fmt.Sprintf("feeAmount %s is greater than value %s", feeAmount.String(), value.String()))
 		}
+
+		afterFeeAmount = value.Sub(feeAmount)
 		feeCoins := sdk.NewCoins(sdk.NewCoin(sourceAssetDenom, feeAmount))
 		k.bankKeeper.SendCoins(ctx, fromAddress, feeAddress, feeCoins)
 
@@ -267,7 +269,7 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 	}
 
 	// send coin of sourceAssetDenom from fromAddress to module account address
-	amountCoins := sdk.NewCoins(sdk.NewCoin(sourceAssetDenom, value))
+	amountCoins := sdk.NewCoins(sdk.NewCoin(sourceAssetDenom, afterFeeAmount))
 	if err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, fromAddress, types.ModuleName, amountCoins); err != nil {
 		return types.ErrLock(fmt.Sprintf("supplyKeeper.SendCoinsFromAccountToModule Error: from: %s, moduleAccount: %s of moduleName: %s, amount: %s", fromAddress.String(), k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress(), types.ModuleName, amountCoins.String()))
 	}
@@ -289,7 +291,7 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 		return types.ErrLock(fmt.Sprintf("missing asset registry: lockProxyHash: %s, denom: %s, toChainId: %d, toChainProxyHash: %s, toChainAssetHash: %s", string(lockProxyHash), sourceAssetDenom, toChainId, hex.EncodeToString(toChainProxyHash), hex.EncodeToString(toChainAssetHash)))
 	}
 
-	k.IncreaseBalance(ctx, lockProxyHash, []byte(sourceAssetDenom), toChainId, toChainProxyHash, toChainAssetHash, value)
+	k.IncreaseBalance(ctx, lockProxyHash, []byte(sourceAssetDenom), toChainId, toChainProxyHash, toChainAssetHash, afterFeeAmount)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -349,6 +351,15 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 		if err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, feeAddressAcc, feeCoins); err != nil {
 			return types.ErrUnLock(fmt.Sprintf("supplyKeeper.SendCoinsFromModuleToAccount, Error: send coins:%s from Module account:%s to receiver account:%s error", feeCoins.String(), k.GetModuleAccount(ctx).GetAddress().String(), feeAddressAcc.String()))
 		}
+
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeUnlock,
+				sdk.NewAttribute(types.AttributeKeyToChainAssetHash, hex.EncodeToString([]byte(toAssetDenom))),
+				sdk.NewAttribute(types.AttributeKeyToAddress, feeAddressAcc.String()),
+				sdk.NewAttribute(types.AttributeKeyAmount, feeAmount.String()),
+			),
+		})
 	}
 
 	// mint coin of sourceAssetDenom
