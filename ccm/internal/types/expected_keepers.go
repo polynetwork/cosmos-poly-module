@@ -53,5 +53,5 @@ type UnlockKeeper interface {
 }
 
 type AssetKeeper interface {
-	RegisterAsset(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk.AccAddress, toContractAddr []byte, argsBs []byte) error
+	RegisterAsset(ctx sdk.Context, fromChainId uint64, fromContractAddr []byte, toContractAddr []byte, argsBs []byte) error
 }
