@@ -205,7 +205,7 @@ func (k Keeper) RegisterAsset(ctx sdk.Context, fromChainId uint64, fromContractA
 }
 
 func (k Keeper) CreateCoinAndDelegateToProxy(ctx sdk.Context, creator sdk.AccAddress, coin sdk.Coin, lockproxyHash []byte, nativeChainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte) error {
-	if reason, exist := k.ccmKeeper.ExistDenom(ctx, coin.Denom); exist {
+	if len(k.GetDenomCreator(ctx, denom)) != 0 {
 		return types.ErrCreateCoinAndDelegateToProxy(fmt.Sprintf("denom:%s already exist, reason: %s", coin.Denom, reason))
 	}
 	if exist := k.EnsureLockProxyExist(ctx, lockproxyHash); !exist {
