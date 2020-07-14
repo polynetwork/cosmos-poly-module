@@ -231,6 +231,18 @@ func (k Keeper) CreateCoinAndDelegateToProxy(ctx sdk.Context, creator sdk.AccAdd
 
 	k.IncreaseBalance(ctx, lockproxyHash, []byte(coin.Denom), nativeChainId, nativeLockProxyHash, nativeAssetHash, coin.Amount)
 
+	args := types.RegisterAssetTxArgs{
+		AssetHash:       []byte(coin.Denom),
+		NativeAssetHash: nativeAssetHash,
+	}
+	sink := polycommon.NewZeroCopySink(nil)
+	if err := args.Serialization(sink); err != nil {
+		return types.ErrCreateCoinAndDelegateToProxy(fmt.Sprintf("TxArgs Serialization Error:%v", err))
+	}
+	if err := k.ccmKeeper.CreateCrossChainTx(ctx, creator, nativeChainId, lockproxyHash, nativeLockProxyHash, "registerAsset", sink.Bytes()); err != nil {
+		return types.ErrCreateCoinAndDelegateToProxy(fmt.Sprintf("ccmKeeper.CreateCrossChainTx Error: toChainId: %d, fromContractHash: %x, toChainProxyHash: %x, args: %x", nativeChainId, lockproxyHash, nativeLockProxyHash, args))
+	}
+
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeCreateAndDelegateCoinToProxy,
@@ -281,7 +293,6 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 		return types.ErrLock(fmt.Sprintf("supplyKeeper.SendCoinsFromAccountToModule Error: from: %s, moduleAccount: %s of moduleName: %s, amount: %s", fromAddress.String(), k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress(), types.ModuleName, amountCoins.String()))
 	}
 
-	// get target asset hash from storage
 	sink := polycommon.NewZeroCopySink(nil)
 	if err := args.Serialization(sink, 32); err != nil {
 		return types.ErrLock(fmt.Sprintf("TxArgs Serialization Error:%v", err))
