@@ -19,7 +19,6 @@ package cli
 
 import (
 	"bufio"
-	"encoding/hex"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -57,12 +56,8 @@ func SendSyncGenesisTxCmd(cdc *codec.Codec) *cobra.Command {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			genesisHeaderBytes, err := hex.DecodeString(args[0])
-			if err != nil {
-				return err
-			}
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgSyncGenesisParam(cliCtx.GetFromAddress(), genesisHeaderBytes)
+			msg := types.NewMsgSyncGenesisParam(cliCtx.GetFromAddress(), args[0])
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
@@ -78,13 +73,8 @@ func SendSyncHeaderTxCmd(cdc *codec.Codec) *cobra.Command {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			headerBytes, err := hex.DecodeString(args[0])
-			if err != nil {
-				return err
-			}
-
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgSyncHeadersParam(cliCtx.GetFromAddress(), [][]byte{headerBytes})
+			msg := types.NewMsgSyncHeadersParam(cliCtx.GetFromAddress(), []string{args[0]})
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}

@@ -23,13 +23,13 @@ import (
 )
 
 const (
-	ModuleName        = types.ModuleName
-	DefaultParamspace = types.DefaultParamspace
-	StoreKey          = types.StoreKey
-	QuerierRoute      = types.QuerierRoute
-	QueryParameters   = types.QueryParameters
-	RouterKey         = types.RouterKey
-
+	ModuleName                    = types.ModuleName
+	DefaultParamspace             = types.DefaultParamspace
+	StoreKey                      = types.StoreKey
+	QuerierRoute                  = types.QuerierRoute
+	QueryParameters               = types.QueryParameters
+	QueryConsensusPeers           = types.QueryConsensusPeers
+	RouterKey                     = types.RouterKey
 	AttributeValueCategory        = types.AttributeValueCategory
 	EventTypeSyncHeader           = types.EventTypeSyncHeader
 	AttributeKeyChainId           = types.AttributeKeyChainId
@@ -39,47 +39,25 @@ const (
 )
 
 var (
-	// functions aliases
-	RegisterCodec = types.RegisterCodec
-	NewQuerier    = keeper.NewQuerier
-
-	NewKeeper              = keeper.NewKeeper
-	NewMsgSyncGenesisParam = types.NewMsgSyncGenesisParam
-	NewMsgSyncHeadersParam = types.NewMsgSyncHeadersParam
-
-	NewQueryHeaderParams        = types.NewQueryHeaderParams
-	NewQueryCurrentHeightParams = types.NewQueryCurrentHeightParams
-
-	// key function
-	GetBlockHeaderKey    = keeper.GetBlockHeaderKey
-	GetBlockHashKey      = keeper.GetBlockHashKey
-	GetBlockCurHeightKey = keeper.GetBlockCurHeightKey
-	GetConsensusPeerKey  = keeper.GetConsensusPeerKey
-	GetKeyHeightsKey     = keeper.GetKeyHeightsKey
-
-	// variable aliases
 	ModuleCdc                    = types.ModuleCdc
+	RegisterCodec                = types.RegisterCodec
+	NewQuerier                   = keeper.NewQuerier
+	NewKeeper                    = keeper.NewKeeper
+	NewMsgSyncGenesisParam       = types.NewMsgSyncGenesisParam
+	NewMsgSyncHeadersParam       = types.NewMsgSyncHeadersParam
+	NewQueryConsensusPeersParams = types.NewQueryConsensusPeersParams
+	GetConsensusPeerKey          = keeper.GetConsensusPeerKey
 	ErrDeserializeHeader         = types.ErrDeserializeHeader
 	ErrMarshalSpecificTypeFail   = types.ErrMarshalSpecificTypeFail
 	ErrUnmarshalSpecificTypeFail = types.ErrUnmarshalSpecificTypeFail
-
-	BlockHeaderPrefix   = keeper.BlockHeaderPrefix
-	BlockHashPrefix     = keeper.BlockHashPrefix
-	ConsensusPeerPrefix = keeper.ConsensusPeerPrefix
-	KeyHeightPrefix     = keeper.KeyHeightPrefix
-
-	BlockCurrentHeightKey = keeper.BlockCurrentHeightKey
-	QueryHeader           = types.QueryHeader
-	QueryCurrentHeight    = types.QueryCurrentHeight
-	QueryKeyHeights       = types.QueryKeyHeights
-	QueryKeyHeight        = types.QueryKeyHeight
+	ConsensusPeerPrefix          = keeper.ConsensusPeerPrefix
+	KeyHeaderHashPrefix          = keeper.KeyHeaderHashPrefix
 )
 
 type (
-	Keeper                   = keeper.Keeper
-	MsgSyncGenesisParam      = types.MsgSyncGenesisParam
-	MsgSyncHeadersParam      = types.MsgSyncHeadersParam
-	QueryHeaderParams        = types.QueryHeaderParams
-	QueryCurrentHeightParams = types.QueryCurrentHeightParams
-	QueryKeyHeightsParams    = types.QueryKeyHeightsParams
+	Keeper              = keeper.Keeper
+	ConsensusPeers      = types.ConsensusPeers
+	MsgSyncGenesisParam = types.MsgSyncGenesisParam
+	MsgSyncHeadersParam = types.MsgSyncHeadersParam
+	QueryHeaderParams   = types.QueryConsensusPeersParams
 )

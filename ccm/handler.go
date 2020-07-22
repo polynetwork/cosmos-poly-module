@@ -40,7 +40,7 @@ func NewHandler(k keeper.Keeper) sdk.Handler {
 
 func handleMsgProcessCrossChainTx(ctx sdk.Context, k keeper.Keeper, msg types.MsgProcessCrossChainTx) (*sdk.Result, error) {
 
-	err := k.ProcessCrossChainTx(ctx, msg.FromChainId, msg.Height, msg.Proof, msg.Header)
+	err := k.ProcessCrossChainTx(ctx, msg.FromChainId, msg.Proof, msg.Header, msg.HeaderProof, msg.CurHeader)
 	if err != nil {
 		return nil, err
 	}

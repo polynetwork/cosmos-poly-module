@@ -24,7 +24,6 @@ import (
 	"github.com/spf13/cobra"
 	"strings"
 
-	"encoding/hex"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -53,12 +52,12 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 
 func SendProcessCrossChainTxTxCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "process-crosschain-tx [from_chainId] [height] [proof] [header]",
+		Use:   "process-crosschain-tx [from_chainId] [proof] [header] [header_proof] [current_epoch_header]",
 		Short: "process cross chain tx targeting at current cosmos-type chain",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`
 Example:
-$ %s tx %s process-crosschain-tx 3 1000 'proof_hex_str_at_height_1000' 'header_1000_can_be_empty_if_header_already_synced'
+$ %s tx %s process-crosschain-tx 0 'proof_hex_str_at_height_1000' 'header_1000' 'header_proof_from_1000_to_header_within_curent_epoch' 'header_in_current_epoch'
 `,
 				version.ClientName, types.ModuleName,
 			),
@@ -73,21 +72,12 @@ $ %s tx %s process-crosschain-tx 3 1000 'proof_hex_str_at_height_1000' 'header_1
 			if err != nil {
 				return err
 			}
-
-			heightStr := args[1]
-			height, err := strconv.ParseUint(heightStr, 10, 32)
-			if err != nil {
-				return err
-			}
-
-			proof := args[2]
-			header, err := hex.DecodeString(args[3])
-			if err != nil {
-				return fmt.Errorf("decode hex string 'header' error:%v", err)
-			}
-
+			proofStr := args[1]
+			headerStr := args[2]
+			headerProofStr := args[3]
+			curHeaderStr := args[4]
 			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.NewMsgProcessCrossChainTx(cliCtx.GetFromAddress(), fromChainId, uint32(height), proof, header)
+			msg := types.NewMsgProcessCrossChainTx(cliCtx.GetFromAddress(), fromChainId, proofStr, headerStr, headerProofStr, curHeaderStr)
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}

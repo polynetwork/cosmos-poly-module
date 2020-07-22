@@ -21,8 +21,7 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
-	polytype "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/core/types"
+	polycommon "github.com/polynetwork/poly/common"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -47,10 +46,7 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 
 	ccQueryCmd.AddCommand(
 		flags.GetCommands(
-			GetCmdQueryHeader(queryRoute, cdc),
-			GetCmdQueryCurrentHeight(queryRoute, cdc),
-			GetCmdQueryKeyHeights(queryRoute, cdc),
-			GetCmdQueryKeyHeight(queryRoute, cdc),
+			GetCmdQueryConsensusPeers(queryRoute, cdc),
 		)...,
 	)
 
@@ -58,17 +54,17 @@ func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCmdQueryValidatorOutstandingRewards implements the query validator outstanding rewards command.
-func GetCmdQueryHeader(queryRoute string, cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryConsensusPeers(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "header [chainId] [height]",
+		Use:   "consensus-peer [chainId]",
 		Args:  cobra.ExactArgs(2),
-		Short: "Query header of chainId of height",
+		Short: "Query consensus peers info of a specific chainId",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query block header for a specific height 
-already synced from another blockchain, normally, relayer-chain (with chainId=0), into current chain 
+			fmt.Sprintf(`Query current consensus peers info for a specific chainId 
+already synced from another blockchain, normally, poly-chain (with chainId=0), into current chain 
 
 Example:
-$ %s query %s header 0 1
+$ %s query %s consensus-pper 0
 `,
 				version.ClientName, types.ModuleName,
 			),
@@ -77,137 +73,21 @@ $ %s query %s header 0 1
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			chainIdStr := args[0]
-			heightStr := args[1]
 
 			chainId, err := strconv.ParseUint(chainIdStr, 10, 64)
 			if err != nil {
 				return err
 			}
-			height, err := strconv.ParseUint(heightStr, 10, 32)
-			if err != nil {
-				return err
-			}
 
-			res, err := common.QueryHeader(cliCtx, queryRoute, uint64(chainId), uint32(height))
+			res, err := common.QueryConsensusPeers(cliCtx, queryRoute, uint64(chainId))
 			if err != nil {
 				return err
 			}
-			var header polytype.Header
-			if err := header.Deserialization(polycommon.NewZeroCopySource(res)); err != nil {
+			var cp types.ConsensusPeers
+			if err := cp.Deserialization(polycommon.NewZeroCopySource(res)); err != nil {
 				fmt.Printf("Query PolyChain header Deserialization")
 			}
-			fmt.Printf("header of height:%d is:\n %s\n", header.Height, header.String())
-			return nil
-		},
-	}
-}
-
-// GetCmdQueryValidatorOutstandingRewards implements the query validator outstanding rewards command.
-func GetCmdQueryCurrentHeight(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "current-height [chainId]",
-		Args:  cobra.ExactArgs(1),
-		Short: "Query block height",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query the currently synced height of chainId blockchain
-
-Example:
-$ %s query %s current-height 0
-`,
-				version.ClientName, types.ModuleName,
-			),
-		),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			chainIdStr := args[0]
-
-			chainId, err := strconv.ParseUint(chainIdStr, 10, 64)
-			if err != nil {
-				return err
-			}
-
-			res, err := common.QueryCurrentHeaderHeight(cliCtx, queryRoute, chainId)
-			if err != nil {
-				return err
-			}
-			var height uint32
-			cdc.MustUnmarshalJSON(res, &height)
-			fmt.Printf("current synced header height of chainid:%d is: %d\n", chainId, height)
-			return nil
-			//return cliCtx.PrintOutput(MCHeader{header})
-		},
-	}
-}
-
-func GetCmdQueryKeyHeights(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "key-heights [chainId]",
-		Args:  cobra.ExactArgs(1),
-		Short: "Query block height",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query the currently synced height of chainId blockchain
-
-Example:
-$ %s query %s key-heights 0
-`,
-				version.ClientName, types.ModuleName,
-			),
-		),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			chainIdStr := args[0]
-
-			chainId, err := strconv.ParseUint(chainIdStr, 10, 64)
-			if err != nil {
-				return err
-			}
-
-			res, err := common.QueryKeyHeights(cliCtx, queryRoute, chainId)
-			if err != nil {
-				return err
-			}
-			var keyHeights types.KeyHeights
-			cdc.MustUnmarshalJSON(res, &keyHeights)
-			fmt.Printf("Key heights of chainid: %d is: %+v\n", chainId, keyHeights)
-			return nil
-			//return cliCtx.PrintOutput(MCHeader{header})
-		},
-	}
-}
-
-func GetCmdQueryKeyHeight(queryRoute string, cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "key-height [chainId] [height]",
-		Args:  cobra.ExactArgs(2),
-		Short: "Query block height",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query the currently synced height of chainId blockchain
-
-Example:
-$ %s query %s key-height 0 100
-`,
-				version.ClientName, types.ModuleName,
-			),
-		),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-			chainId, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-			height, err := strconv.Atoi(args[1])
-			if err != nil {
-				return err
-			}
-			res, err := common.QueryKeyHeight(cliCtx, queryRoute, chainId, uint32(height))
-			if err != nil {
-				return err
-			}
-			var keyHeight uint32
-			cdc.MustUnmarshalJSON(res, &keyHeight)
-			fmt.Printf("Key height of chainid: %d is: %d\n", chainId, keyHeight)
+			fmt.Printf("Current ConsensusPeers is:\n %s\n", cp.String())
 			return nil
 		},
 	}

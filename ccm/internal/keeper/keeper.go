@@ -25,22 +25,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/polynetwork/cosmos-poly-module/ccm/internal/types"
 	hs "github.com/polynetwork/cosmos-poly-module/headersync"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
-	polytype "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/core/types"
-	"github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/merkle"
-	ccmc "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/native/service/cross_chain_manager/common"
+	polycommon "github.com/polynetwork/poly/common"
+	polytype "github.com/polynetwork/poly/core/types"
+	"github.com/polynetwork/poly/merkle"
+	ccmc "github.com/polynetwork/poly/native/service/cross_chain_manager/common"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	"github.com/tendermint/tendermint/libs/log"
 	ttype "github.com/tendermint/tendermint/types"
 	"strconv"
 )
-
-type KeeperI interface {
-	ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, height uint32, proofStr string, headerBs []byte) error
-	CreateCrossChainTx(ctx sdk.Context, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
-	SetDenomCreator(ctx sdk.Context, denom string, creator sdk.AccAddress)
-	GetDenomCreator(ctx sdk.Context, denom string) sdk.AccAddress
-}
 
 // Keeper of the mint store
 type Keeper struct {
@@ -124,7 +117,7 @@ func (k Keeper) GetModuleBalance(ctx sdk.Context, moduleName string) (sdk.Coins,
 	//	ensure the passed-in initialAmt is equal to the balance of lockproxy module account
 	moduleAcct := k.supplyKeeper.GetModuleAccount(ctx, moduleName)
 	if moduleAcct == nil {
-		return nil, types.ErrGetModuleBalance(fmt.Sprintf("Module: %s account doesnot exist"))
+		return nil, types.ErrGetModuleBalance(fmt.Sprintf("Module: %s account doesnot exist", moduleName))
 	}
 	return moduleAcct.GetCoins(), nil
 }
@@ -174,29 +167,41 @@ func (k Keeper) CreateCrossChainTx(ctx sdk.Context, fromAddr sdk.AccAddress, toC
 	return nil
 }
 
-func (k Keeper) ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, height uint32, proofStr string, headerBs []byte) error {
-	storedHeader, err := k.hsKeeper.GetHeaderByHeight(ctx, fromChainId, height)
+func (k Keeper) ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, proofStr string, headerStr, headerProofStr, curHeaderStr string) error {
+	headerToBeVerified := new(polytype.Header)
+	headerBs, err := hex.DecodeString(headerStr)
 	if err != nil {
-		return types.ErrProcessCrossChainTx(err.Error())
+		return types.ErrProcessCrossChainTx(fmt.Sprintf("Decode proof hex string: %s to bytes, Error: %s ", headerStr, err.Error()))
 	}
-	if storedHeader == nil {
-		header := new(polytype.Header)
-		if err := header.Deserialization(polycommon.NewZeroCopySource(headerBs)); err != nil {
-			return types.ErrProcessCrossChainTx(hs.ErrDeserializeHeader(err).Error())
+	if err := headerToBeVerified.Deserialization(polycommon.NewZeroCopySource(headerBs)); err != nil {
+		return types.ErrProcessCrossChainTx(hs.ErrDeserializeHeader(err).Error())
+	}
+
+	headerInCurEpoch := new(polytype.Header)
+	curHeaderBs, err := hex.DecodeString(curHeaderStr)
+	if err != nil {
+		headerInCurEpoch = nil
+	} else {
+		if err := headerInCurEpoch.Deserialization(polycommon.NewZeroCopySource(curHeaderBs)); err != nil {
+			headerInCurEpoch = nil
 		}
-		if err := k.hsKeeper.ProcessHeader(ctx, header); err != nil {
-			return types.ErrProcessCrossChainTx(fmt.Sprintf("ProcessHeader Error, %s", err.Error()))
-		}
-		storedHeader = header
-
 	}
 
-	proof, e := hex.DecodeString(proofStr)
-	if e != nil {
-		return types.ErrProcessCrossChainTx(fmt.Sprintf("Decode proof hex string to bytes, Error: %s", e.Error()))
+	headerProof, err := hex.DecodeString(headerProofStr)
+	if err != nil {
+		headerProof = nil
 	}
 
-	merkleValue, err := k.VerifyToCosmosTx(ctx, proof, storedHeader)
+	if err := k.hsKeeper.ProcessHeader(ctx, headerToBeVerified, headerProof, headerInCurEpoch); err != nil {
+		return types.ErrProcessCrossChainTx(fmt.Sprintf("ProcessHeader Error, %s", err.Error()))
+	}
+
+	proof, err := hex.DecodeString(proofStr)
+	if err != nil {
+		return types.ErrProcessCrossChainTx(fmt.Sprintf("Decode proof hex string: %s to bytes, Error: %s", proofStr, err.Error()))
+	}
+
+	merkleValue, err := k.VerifyToCosmosTx(ctx, proof, headerToBeVerified)
 	if err != nil {
 		return types.ErrProcessCrossChainTx(fmt.Sprintf("VerifyToCosmostx failed, %s", err.Error()))
 	}
@@ -205,15 +210,13 @@ func (k Keeper) ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, height 
 		return types.ErrProcessCrossChainTx(fmt.Sprintf("toChainId is not for this chain, expect: %d, got: %d", currentChainCrossChainId, merkleValue.MakeTxParam.ToChainID))
 	}
 	// check if tocontractAddress is lockproxy module account, if yes, invoke lockproxy.unlock(), otherwise, invoke btcx.unlock
-	k.Logger(ctx).Info(fmt.Sprintf("k.unkeeperMap is %+v ", k.ulKeeperMap))
-
 	for key, unlockKeeper := range k.ulKeeperMap {
 		k.Logger(ctx).Info(fmt.Sprintf("key is %+v ", key))
 		k.Logger(ctx).Info(fmt.Sprintf("IfContains %+v ", unlockKeeper.ContainToContractAddr(ctx, merkleValue.MakeTxParam.ToContractAddress, fromChainId)))
 
 		if unlockKeeper.ContainToContractAddr(ctx, merkleValue.MakeTxParam.ToContractAddress, merkleValue.FromChainID) {
 			if err := unlockKeeper.Unlock(ctx, merkleValue.FromChainID, merkleValue.MakeTxParam.FromContractAddress, merkleValue.MakeTxParam.ToContractAddress, merkleValue.MakeTxParam.Args); err != nil {
-				return types.ErrProcessCrossChainTx(fmt.Sprintf("Unlock failed, for module: %s, ", key, err.Error()))
+				return types.ErrProcessCrossChainTx(fmt.Sprintf("Unlock failed, for module: %s, Error: %s", key, err.Error()))
 			}
 			return nil
 		}

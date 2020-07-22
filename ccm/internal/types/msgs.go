@@ -22,8 +22,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"encoding/hex"
 )
 
 // Governance message types and routes
@@ -33,15 +31,16 @@ const (
 )
 
 type MsgProcessCrossChainTx struct {
-	Submitter   sdk.AccAddress
-	FromChainId uint64
-	Height      uint32
-	Proof       string
-	Header      []byte
+	Submitter   sdk.AccAddress // transaction submitter
+	FromChainId uint64         // the poly chain id
+	Proof       string         // the audit path of cross chain transaction where the root is Header.CrossStateRoot
+	Header      string         // the header of height where the cross chain transaction appears
+	HeaderProof string         // the audit path of Header where the reliable root is CurHeader.BlockRoot
+	CurHeader   string         // any header within current consensus epoch
 }
 
-func NewMsgProcessCrossChainTx(submitter sdk.AccAddress, fromChainId uint64, height uint32, proof string, header []byte) MsgProcessCrossChainTx {
-	return MsgProcessCrossChainTx{submitter, fromChainId, height, proof, header}
+func NewMsgProcessCrossChainTx(submitter sdk.AccAddress, fromChainId uint64, proof, header, headerProof, curHeader string) MsgProcessCrossChainTx {
+	return MsgProcessCrossChainTx{submitter, fromChainId, proof, header, headerProof, curHeader}
 }
 
 //nolint
@@ -54,9 +53,6 @@ func (msg MsgProcessCrossChainTx) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "MsgProcessCrossChainTx.Submitter is empty")
 	}
 	if len(msg.Proof) == 0 {
-		// Disable software upgrade proposals as they are currently equivalent
-		// to text proposals. Re-enable once a valid software upgrade proposal
-		// handler is implemented.
 		return ErrMsgProcessCrossChainTx(fmt.Sprintf("MsgCrossChaintx.Proof should not be empty"))
 	}
 	if len(msg.Header) == 0 {
@@ -66,13 +62,14 @@ func (msg MsgProcessCrossChainTx) ValidateBasic() error {
 }
 
 func (msg MsgProcessCrossChainTx) String() string {
-	return fmt.Sprintf(`Bind Proxy Hash Message:
+	return fmt.Sprintf(`Process Cross Chain Tx Message:
   Submitter:       		%s
   FromChainId: 			%d
-  Height:  				%d
   Proof:    			%s
   Header: 				%s
-`, msg.Submitter.String(), msg.FromChainId, msg.Height, msg.Proof, hex.EncodeToString(msg.Header))
+  HeaderProof: 			%s
+  CurHeader:			%s
+`, msg.Submitter.String(), msg.FromChainId, msg.Proof, msg.Header, msg.HeaderProof, msg.CurHeader)
 }
 
 // Implements Msg.

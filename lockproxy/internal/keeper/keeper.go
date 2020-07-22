@@ -24,9 +24,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/supply/exported"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
 	selfexported "github.com/polynetwork/cosmos-poly-module/lockproxy/exported"
 	"github.com/polynetwork/cosmos-poly-module/lockproxy/internal/types"
+	polycommon "github.com/polynetwork/poly/common"
 	"strconv"
 )
 
@@ -84,7 +84,7 @@ func (k Keeper) CreateLockProxy(ctx sdk.Context, creator sdk.AccAddress) error {
 		sdk.NewEvent(
 			types.EventTypeCreateLockProxy,
 			sdk.NewAttribute(types.AttributeKeyCreator, creator.String()),
-			sdk.NewAttribute(types.AttributeKeyProxyHash, hex.EncodeToString(creator.Bytes())),
+			sdk.NewAttribute(types.AttributeKeyLockProxy, hex.EncodeToString(creator.Bytes())),
 		),
 	})
 	ctx.Logger().With("module", fmt.Sprintf("creator:%s initialized a lockproxy contract with hash: %x", creator.String(), creator.Bytes()))
@@ -171,9 +171,9 @@ func (k Keeper) BindAssetHash(ctx sdk.Context, operator sdk.AccAddress, sourceAs
 			types.EventTypeBindAsset,
 			sdk.NewAttribute(types.AttributeKeyLockProxy, hex.EncodeToString(operator.Bytes())),
 			sdk.NewAttribute(types.AttributeKeySourceAssetDenom, sourceAssetDenom),
-			sdk.NewAttribute(types.AttributeKeySourceAssetHash, hex.EncodeToString([]byte(sourceAssetDenom))),
+			sdk.NewAttribute(types.AttributeKeyFromAssetHash, hex.EncodeToString([]byte(sourceAssetDenom))),
 			sdk.NewAttribute(types.AttributeKeyToChainId, strconv.FormatUint(toChainId, 10)),
-			sdk.NewAttribute(types.AttributeKeyToChainAssetHash, hex.EncodeToString(toAssetHash)),
+			sdk.NewAttribute(types.AttributeKeyToAssetHash, hex.EncodeToString(toAssetHash)),
 		),
 	})
 	return nil
@@ -220,9 +220,9 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeLock,
-			sdk.NewAttribute(types.AttributeKeyFromContractHash, hex.EncodeToString([]byte(sourceAssetDenom))),
+			sdk.NewAttribute(types.AttributeKeyFromAssetHash, hex.EncodeToString([]byte(sourceAssetDenom))),
 			sdk.NewAttribute(types.AttributeKeyToChainId, strconv.FormatUint(toChainId, 10)),
-			sdk.NewAttribute(types.AttributeKeyToChainAssetHash, hex.EncodeToString(toChainAssetHash)),
+			sdk.NewAttribute(types.AttributeKeyToAssetHash, hex.EncodeToString(toChainAssetHash)),
 			sdk.NewAttribute(types.AttributeKeyFromAddress, fromAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyToAddress, hex.EncodeToString(toAddressBs)),
 			sdk.NewAttribute(types.AttributeKeyAmount, value.String()),
@@ -272,7 +272,7 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeUnlock,
-			sdk.NewAttribute(types.AttributeKeyToChainAssetHash, hex.EncodeToString([]byte(toAssetDenom))),
+			sdk.NewAttribute(types.AttributeKeyToAssetHash, hex.EncodeToString([]byte(toAssetDenom))),
 			sdk.NewAttribute(types.AttributeKeyToAddress, toAcctAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 		),

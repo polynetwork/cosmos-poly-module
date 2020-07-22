@@ -19,8 +19,9 @@ package types
 
 import (
 	"fmt"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
+	polycommon "github.com/polynetwork/poly/common"
 	"sort"
+	"strconv"
 )
 
 type Peer struct {
@@ -45,10 +46,6 @@ func (this *Peer) Deserialization(source *polycommon.ZeroCopySource) error {
 	this.Index = uint32(index)
 	this.PeerPubkey = peerPubkey
 	return nil
-}
-
-type KeyHeights struct {
-	HeightList []uint32
 }
 
 type ConsensusPeers struct {
@@ -98,4 +95,24 @@ func (this *ConsensusPeers) Deserialization(source *polycommon.ZeroCopySource) e
 	this.Height = uint32(height)
 	this.PeerMap = peerMap
 	return nil
+}
+
+func (this *ConsensusPeers) String() string {
+	var peerList []*Peer
+	for _, v := range this.PeerMap {
+		peerList = append(peerList, v)
+	}
+	sort.SliceStable(peerList, func(i, j int) bool {
+		return peerList[i].PeerPubkey > peerList[j].PeerPubkey
+	})
+	var peerMapStr string
+	for _, v := range peerList {
+		peerMapStr += "\t\t\t\t\t\t" + strconv.FormatUint(uint64(v.Index), 10) + ":" + v.PeerPubkey + "\n"
+	}
+	return fmt.Sprintf(`
+	ChainID          : %d
+	Height           : %d
+	PeerMap		     : 
+%s	
+`, this.ChainID, this.Height, fmt.Sprintf("%s", peerMapStr))
 }

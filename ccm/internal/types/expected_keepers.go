@@ -20,16 +20,14 @@ package types // noalias
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	supplyexported "github.com/cosmos/cosmos-sdk/x/supply/exported"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
-	polytype "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/core/types"
+	hs "github.com/polynetwork/cosmos-poly-module/headersync"
+	polytype "github.com/polynetwork/poly/core/types"
 )
 
 // SupplyKeeper defines the expected supply keeper
 type HeaderSyncKeeper interface {
-	ProcessHeader(ctx sdk.Context, header *polytype.Header) error
-	GetHeaderByHeight(ctx sdk.Context, chainId uint64, height uint32) (*polytype.Header, error)
-	GetHeaderByHash(ctx sdk.Context, chainId uint64, hash polycommon.Uint256) (*polytype.Header, error)
-	GetCurrentHeight(ctx sdk.Context, chainId uint64) (uint32, error)
+	ProcessHeader(ctx sdk.Context, header *polytype.Header, headerProof []byte, curHeader *polytype.Header) error
+	GetConsensusPeers(ctx sdk.Context, chainId uint64) (*hs.ConsensusPeers, error)
 }
 
 // SupplyKeeper defines the expected supply keeper
