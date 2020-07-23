@@ -58,5 +58,4 @@ type CrossChainManager interface {
 	SetDenomCreator(ctx sdk.Context, denom string, creator sdk.AccAddress)
 	GetDenomCreator(ctx sdk.Context, denom string) sdk.AccAddress
 	ExistDenom(ctx sdk.Context, denom string) (string, bool)
-	GetChainId(ctx sdk.Context) uint64
 }
