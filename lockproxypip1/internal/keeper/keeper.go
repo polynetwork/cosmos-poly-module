@@ -28,9 +28,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/cosmos/cosmos-sdk/x/supply/exported"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
 	selfexported "github.com/polynetwork/cosmos-poly-module/lockproxypip1/exported"
 	"github.com/polynetwork/cosmos-poly-module/lockproxypip1/internal/types"
+	polycommon "github.com/polynetwork/poly/common"
 )
 
 // Keeper of the mint store
