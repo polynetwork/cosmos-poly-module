@@ -33,7 +33,6 @@ var (
 	OperatorToLockProxyKey = []byte{0x01}
 	BindProxyPrefix        = []byte{0x02}
 	BindAssetPrefix        = []byte{0x03}
-	CrossedAmountPrefix    = []byte{0x04}
 )
 
 func GetOperatorToLockProxyKey(operator sdk.AccAddress) []byte {
@@ -50,8 +49,4 @@ func GetBindAssetHashKey(lockProxyHash []byte, sourceAssetHash []byte, targetCha
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, targetChainId)
 	return append(append(append(BindAssetPrefix, lockProxyHash...), sourceAssetHash...), b...)
-}
-
-func GetCrossedAmountKey(sourceAssetHash []byte) []byte {
-	return append(CrossedAmountPrefix, sourceAssetHash...)
 }

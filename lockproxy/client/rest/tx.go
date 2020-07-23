@@ -40,8 +40,8 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/lockproxy/create_lock_proxy", createLockProxyRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/lockproxy/create_and_delegate/{%s}/{%s}", Coin, LockProxyHash), CreateAndDelegateCoinRequestHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("/lockproxy/bind_proxy/{%s}/{%s}", ToChainId, ToLockProxyHash), bindProxyRequestHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/lockproxy/bind_asset", ToChainId, ToLockProxyHash), bindAssetRequestHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc(fmt.Sprintf("/lockproxy/lock", ToChainId, ToLockProxyHash), lockRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/lockproxy/bind_asset"), bindAssetRequestHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc(fmt.Sprintf("/lockproxy/lock"), lockRequestHandlerFn(cliCtx)).Methods("POST")
 
 }
 

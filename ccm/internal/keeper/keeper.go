@@ -27,21 +27,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/polynetwork/cosmos-poly-module/ccm/internal/types"
 	hs "github.com/polynetwork/cosmos-poly-module/headersync"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
-	polytype "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/core/types"
-	"github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/merkle"
-	ccmc "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/native/service/cross_chain_manager/common"
+	polycommon "github.com/polynetwork/poly/common"
+	polytype "github.com/polynetwork/poly/core/types"
+	"github.com/polynetwork/poly/merkle"
+	ccmc "github.com/polynetwork/poly/native/service/cross_chain_manager/common"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	"github.com/tendermint/tendermint/libs/log"
 	ttype "github.com/tendermint/tendermint/types"
 )
-
-type KeeperI interface {
-	ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, height uint32, proofStr string, headerBs []byte) error
-	CreateCrossChainTx(ctx sdk.Context, toChainId uint64, fromContractHash, toContractHash []byte, method string, args []byte) error
-	SetDenomCreator(ctx sdk.Context, denom string, creator sdk.AccAddress)
-	GetDenomCreator(ctx sdk.Context, denom string) sdk.AccAddress
-}
 
 // Keeper of the mint store
 type Keeper struct {
@@ -65,7 +58,6 @@ func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, paramSpace params.Subspace, h
 		ulKeeperMap:  nil,
 	}
 }
-
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
@@ -77,19 +69,10 @@ func (k *Keeper) MountUnlockKeeperMap(ulKeeperMap map[string]types.UnlockKeeper)
 	}
 }
 
-func (k *Keeper) MountAssetKeeper(assetKeeper types.AssetKeeper) {
-	k.assetKeeper = assetKeeper
-}
-
 // GetParams returns the total set of ccm parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)
 	return params
-}
-
-// GetChainId returns the chainId from params
-func (k Keeper) GetChainId(ctx sdk.Context) uint64 {
-	return k.GetParams(ctx).ChainIdInPolyNet
 }
 
 // SetParams sets the total set of ccm parameters.
@@ -135,7 +118,7 @@ func (k Keeper) GetModuleBalance(ctx sdk.Context, moduleName string) (sdk.Coins,
 	//	ensure the passed-in initialAmt is equal to the balance of lockproxy module account
 	moduleAcct := k.supplyKeeper.GetModuleAccount(ctx, moduleName)
 	if moduleAcct == nil {
-		return nil, types.ErrGetModuleBalance(fmt.Sprintf("Module: %s account doesnot exist"))
+		return nil, types.ErrGetModuleBalance(fmt.Sprintf("Module: %s account doesnot exist", moduleName))
 	}
 	return moduleAcct.GetCoins(), nil
 }
@@ -185,48 +168,41 @@ func (k Keeper) CreateCrossChainTx(ctx sdk.Context, fromAddr sdk.AccAddress, toC
 	return nil
 }
 
-func (k Keeper) ProcessUnlockTx(ctx sdk.Context, merkleValue *ccmc.ToMerkleValue, fromChainId uint64) error {
-	for key, unlockKeeper := range k.ulKeeperMap {
-		k.Logger(ctx).Info(fmt.Sprintf("key is %+v ", key))
-		k.Logger(ctx).Info(fmt.Sprintf("IfContains %+v ", unlockKeeper.ContainToContractAddr(ctx, merkleValue.MakeTxParam.ToContractAddress, fromChainId)))
-
-		if unlockKeeper.ContainToContractAddr(ctx, merkleValue.MakeTxParam.ToContractAddress, merkleValue.FromChainID) {
-			if err := unlockKeeper.Unlock(ctx, merkleValue.FromChainID, merkleValue.MakeTxParam.FromContractAddress, merkleValue.MakeTxParam.ToContractAddress, merkleValue.MakeTxParam.Args); err != nil {
-				return types.ErrProcessCrossChainTx(fmt.Sprintf("Unlock failed, for module: %s, ", key, err.Error()))
-			}
-			return nil
-		}
-	}
-
-	return types.ErrProcessCrossChainTx(fmt.Sprintf("Cannot find any unlock keeper to perform 'unlock' method for toContractAddr:%x, fromChainId:%d", merkleValue.MakeTxParam.ToContractAddress, fromChainId))
-}
-
-func (k Keeper) ProcessRegisterAssetTx(ctx sdk.Context, merkleValue *ccmc.ToMerkleValue) error {
-	return k.assetKeeper.RegisterAsset(ctx, merkleValue.FromChainID, merkleValue.MakeTxParam.FromContractAddress, merkleValue.MakeTxParam.ToContractAddress, merkleValue.MakeTxParam.Args)
-}
-
-func (k Keeper) ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, height uint32, proofStr string, headerBs []byte) error {
-	storedHeader, err := k.hsKeeper.GetHeaderByHeight(ctx, fromChainId, height)
+func (k Keeper) ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, proofStr string, headerStr, headerProofStr, curHeaderStr string) error {
+	headerToBeVerified := new(polytype.Header)
+	headerBs, err := hex.DecodeString(headerStr)
 	if err != nil {
-		return types.ErrProcessCrossChainTx(err.Error())
+		return types.ErrProcessCrossChainTx(fmt.Sprintf("Decode proof hex string: %s to bytes, Error: %s ", headerStr, err.Error()))
 	}
-	if storedHeader == nil {
-		header := new(polytype.Header)
-		if err := header.Deserialization(polycommon.NewZeroCopySource(headerBs)); err != nil {
-			return types.ErrProcessCrossChainTx(hs.ErrDeserializeHeader(err).Error())
-		}
-		if err := k.hsKeeper.ProcessHeader(ctx, header); err != nil {
-			return types.ErrProcessCrossChainTx(fmt.Sprintf("ProcessHeader Error, %s", err.Error()))
-		}
-		storedHeader = header
+	if err := headerToBeVerified.Deserialization(polycommon.NewZeroCopySource(headerBs)); err != nil {
+		return types.ErrProcessCrossChainTx(hs.ErrDeserializeHeader(err).Error())
 	}
 
-	proof, e := hex.DecodeString(proofStr)
-	if e != nil {
-		return types.ErrProcessCrossChainTx(fmt.Sprintf("Decode proof hex string to bytes, Error: %s", e.Error()))
+	headerInCurEpoch := new(polytype.Header)
+	curHeaderBs, err := hex.DecodeString(curHeaderStr)
+	if err != nil {
+		headerInCurEpoch = nil
+	} else {
+		if err := headerInCurEpoch.Deserialization(polycommon.NewZeroCopySource(curHeaderBs)); err != nil {
+			headerInCurEpoch = nil
+		}
 	}
 
-	merkleValue, err := k.VerifyToCosmosTx(ctx, proof, storedHeader)
+	headerProof, err := hex.DecodeString(headerProofStr)
+	if err != nil {
+		headerProof = nil
+	}
+
+	if err := k.hsKeeper.ProcessHeader(ctx, headerToBeVerified, headerProof, headerInCurEpoch); err != nil {
+		return types.ErrProcessCrossChainTx(fmt.Sprintf("ProcessHeader Error, %s", err.Error()))
+	}
+
+	proof, err := hex.DecodeString(proofStr)
+	if err != nil {
+		return types.ErrProcessCrossChainTx(fmt.Sprintf("Decode proof hex string: %s to bytes, Error: %s", proofStr, err.Error()))
+	}
+
+	merkleValue, err := k.VerifyToCosmosTx(ctx, proof, headerToBeVerified)
 	if err != nil {
 		return types.ErrProcessCrossChainTx(fmt.Sprintf("VerifyToCosmostx failed, %s", err.Error()))
 	}
@@ -235,16 +211,19 @@ func (k Keeper) ProcessCrossChainTx(ctx sdk.Context, fromChainId uint64, height 
 		return types.ErrProcessCrossChainTx(fmt.Sprintf("toChainId is not for this chain, expect: %d, got: %d", currentChainCrossChainId, merkleValue.MakeTxParam.ToChainID))
 	}
 	// check if tocontractAddress is lockproxy module account, if yes, invoke lockproxy.unlock(), otherwise, invoke btcx.unlock
-	k.Logger(ctx).Info(fmt.Sprintf("k.unkeeperMap is %+v ", k.ulKeeperMap))
+	for key, unlockKeeper := range k.ulKeeperMap {
+		k.Logger(ctx).Info(fmt.Sprintf("key is %+v ", key))
+		k.Logger(ctx).Info(fmt.Sprintf("IfContains %+v ", unlockKeeper.ContainToContractAddr(ctx, merkleValue.MakeTxParam.ToContractAddress, fromChainId)))
 
-	switch merkleValue.MakeTxParam.Method {
-	case "unlock":
-		return k.ProcessUnlockTx(ctx, merkleValue, fromChainId)
-	case "registerAsset":
-		return k.ProcessRegisterAssetTx(ctx, merkleValue)
-	default:
-		return types.ErrProcessCrossChainTx(fmt.Sprintf("unsupported cross-chain method: %s", merkleValue.MakeTxParam.Method))
+		if unlockKeeper.ContainToContractAddr(ctx, merkleValue.MakeTxParam.ToContractAddress, merkleValue.FromChainID) {
+			if err := unlockKeeper.Unlock(ctx, merkleValue.FromChainID, merkleValue.MakeTxParam.FromContractAddress, merkleValue.MakeTxParam.ToContractAddress, merkleValue.MakeTxParam.Args); err != nil {
+				return types.ErrProcessCrossChainTx(fmt.Sprintf("Unlock failed, for module: %s, Error: %s", key, err.Error()))
+			}
+			return nil
+		}
 	}
+
+	return types.ErrProcessCrossChainTx(fmt.Sprintf("Cannot find any unlock keeper to perform 'unlock' method for toContractAddr:%x, fromChainId:%d", merkleValue.MakeTxParam.ToContractAddress, fromChainId))
 }
 
 func (k Keeper) VerifyToCosmosTx(ctx sdk.Context, proof []byte, header *polytype.Header) (*ccmc.ToMerkleValue, error) {

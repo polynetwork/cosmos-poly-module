@@ -26,7 +26,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/polynetwork/cosmos-poly-module/btcx/exported"
 	"github.com/polynetwork/cosmos-poly-module/btcx/internal/types"
-	polycommon "github.com/polynetwork/cosmos-poly-module/headersync/poly-utils/common"
+	polycommon "github.com/polynetwork/poly/common"
 	"github.com/tendermint/tendermint/libs/log"
 	"math/big"
 	"strconv"
