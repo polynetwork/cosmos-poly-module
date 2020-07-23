@@ -69,6 +69,10 @@ func (k *Keeper) MountUnlockKeeperMap(ulKeeperMap map[string]types.UnlockKeeper)
 	}
 }
 
+func (k *Keeper) MountAssetKeeper(assetKeeper types.AssetKeeper) {
+	k.assetKeeper = assetKeeper
+}
+
 // GetParams returns the total set of ccm parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)
