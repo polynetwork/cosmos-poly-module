@@ -32,6 +32,7 @@ type TxArgs struct {
 	Amount        *big.Int
 	FeeAmount     *big.Int
 	FeeAddress    []byte
+	FromAddress   []byte
 }
 
 func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) error {
@@ -49,6 +50,7 @@ func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) err
 	}
 	sink.WriteBytes(paddedFeeAmountBs)
 	sink.WriteVarBytes(this.FeeAddress)
+	sink.WriteVarBytes(this.FromAddress)
 	return nil
 }
 
@@ -86,11 +88,17 @@ func (this *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen in
 		return fmt.Errorf("TxArgs deserialize FeeAddress error")
 	}
 
+	fromAddress, eof := source.NextVarBytes()
+	if eof {
+		return fmt.Errorf("TxArgs deserialize FromAddress error")
+	}
+
 	this.FromAssetHash = fromAssetHash
 	this.ToAssetHash = toAssetHash
 	this.ToAddress = toAddress
 	this.Amount = amount
 	this.FeeAmount = feeAmount
 	this.FeeAddress = feeAddress
+	this.FromAddress = fromAddress
 	return nil
 }
