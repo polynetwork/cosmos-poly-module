@@ -40,6 +40,7 @@ const (
 	AttributeKeyFromAddress      = "from_address"
 	AttributeKeyToAddress        = "to_address"
 	AttributeKeyAmount           = "amount"
+	AttributeKeyIsFee            = "is_fee"
 
 	AttributeKeyFromChainId = "from_chain_id"
 

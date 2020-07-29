@@ -351,6 +351,11 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 	toAcctAddress := make(sdk.AccAddress, len(toAddress))
 	copy(toAcctAddress, toAddress)
 
+	fromAcctAddress := sdk.AccAddress(args.FromAddress)
+	if fromAcctAddress.Empty() {
+		return types.ErrUnLock("FromAddress is empty")
+	}
+
 	if err := k.EnsureAccountExist(ctx, toAddress); err != nil {
 		return err
 	}
@@ -378,6 +383,8 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 				sdk.NewAttribute(types.AttributeKeyToChainAssetHash, hex.EncodeToString([]byte(toAssetDenom))),
 				sdk.NewAttribute(types.AttributeKeyToAddress, feeAddressAcc.String()),
 				sdk.NewAttribute(types.AttributeKeyAmount, feeAmount.String()),
+				sdk.NewAttribute(types.AttributeKeyFromAddress, fromAcctAddress.String()),
+				sdk.NewAttribute(types.AttributeKeyIsFee, "1"),
 			),
 		})
 	}
@@ -400,6 +407,8 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 			sdk.NewAttribute(types.AttributeKeyToChainAssetHash, hex.EncodeToString([]byte(toAssetDenom))),
 			sdk.NewAttribute(types.AttributeKeyToAddress, toAcctAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
+			sdk.NewAttribute(types.AttributeKeyFromAddress, fromAcctAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyIsFee, "0"),
 		),
 	})
 	return nil
