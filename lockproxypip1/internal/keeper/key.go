@@ -18,6 +18,7 @@
 package keeper
 
 import (
+	"crypto/sha256"
 	"encoding/binary"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,16 +42,27 @@ func GetOperatorToLockProxyKey(operator sdk.AccAddress) []byte {
 	return append(OperatorToLockProxyKey, operator...)
 }
 
+func GetHashKey(lockProxyHash []byte, assetHash []byte, nativeChainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte) []byte {
+	nativeChainIdBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(nativeChainIdBytes, nativeChainId)
+
+	lockProxyHashBz := sha256.Sum256(lockProxyHash)
+	assetHashBz := sha256.Sum256(assetHash)
+	nativeChainIdBz := sha256.Sum256(nativeChainIdBytes)
+	nativeLockProxyHashBz := sha256.Sum256(nativeLockProxyHash)
+	nativeAssetHashBz := sha256.Sum256(nativeAssetHash)
+
+	return append(append(append(append(lockProxyHashBz[:], assetHashBz[:]...), nativeChainIdBz[:]...), nativeLockProxyHashBz[:]...), nativeAssetHashBz[:]...)
+}
+
 func GetRegistryKey(lockProxyHash []byte, assetHash []byte, nativeChainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte) []byte {
-	nativeChainIdBz := make([]byte, 8)
-	binary.LittleEndian.PutUint64(nativeChainIdBz, nativeChainId)
-	return append(append(append(append(append(RegistryPrefix, lockProxyHash...), assetHash...), nativeChainIdBz...), nativeLockProxyHash...), nativeAssetHash...)
+	hashKey := GetHashKey(lockProxyHash, assetHash, nativeChainId, nativeLockProxyHash, nativeAssetHash)
+	return append(RegistryPrefix, hashKey...)
 }
 
 func GetBalanceKey(lockProxyHash []byte, assetHash []byte, nativeChainId uint64, nativeLockProxyHash []byte, nativeAssetHash []byte) []byte {
-	nativeChainIdBz := make([]byte, 8)
-	binary.LittleEndian.PutUint64(nativeChainIdBz, nativeChainId)
-	return append(append(append(append(append(BalancePrefix, lockProxyHash...), assetHash...), nativeChainIdBz...), nativeLockProxyHash...), nativeAssetHash...)
+	hashKey := GetHashKey(lockProxyHash, assetHash, nativeChainId, nativeLockProxyHash, nativeAssetHash)
+	return append(BalancePrefix, hashKey...)
 }
 
 func GetBindChainIdKey(proxyHash []byte, toChainId uint64) []byte {

@@ -119,6 +119,8 @@ func (k Keeper) UpdateRegistry(ctx sdk.Context, lockProxyHash []byte, assetHash 
 	registryKey := GetRegistryKey(lockProxyHash, assetHash, nativeChainId, nativeLockProxyHash, nativeAssetHash)
 	store.Set(registryKey, []byte("1"))
 
+	// GetBindChainIdKey is used in ContainToContractAddr to check when to return true
+	// this will allow the module to be called by the ccm keeper to handle the appropriate cross-chain txns
 	bindChainIdKey := GetBindChainIdKey(lockProxyHash, nativeChainId)
 	if store.Get(bindChainIdKey) == nil {
 		store.Set(bindChainIdKey, []byte("1"))
