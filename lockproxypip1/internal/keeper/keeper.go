@@ -271,8 +271,8 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 	}
 
 	afterFeeAmount := value
+	feeAddressAcc := sdk.AccAddress(args.FeeAddress)
 	if deductFeeInLock && feeAmount.GT(sdk.ZeroInt()) {
-		feeAddressAcc := sdk.AccAddress(args.FeeAddress)
 		if feeAddressAcc.Empty() {
 			return types.ErrLock("FeeAmount is present but FeeAddress is empty")
 		}
@@ -324,6 +324,8 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 			sdk.NewAttribute(types.AttributeKeyToAddress, hex.EncodeToString(toAddressBs)),
 			sdk.NewAttribute(types.AttributeKeyAmount, value.String()),
 			sdk.NewAttribute(types.AttributeKeyLockProxy, hex.EncodeToString(fromContractHash)),
+			sdk.NewAttribute(types.AttributeKeyFeeAmount, feeAmount.String()),
+			sdk.NewAttribute(types.AttributeKeyFeeAddress, feeAddressAcc.String()),
 		),
 	})
 
@@ -361,12 +363,12 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 	}
 
 	afterFeeAmount := amount
+	feeAddressAcc := sdk.AccAddress(args.FeeAddress)
 	if feeAmount.GT(sdk.ZeroInt()) {
 		if feeAmount.GT(amount) {
 			return types.ErrUnLock(fmt.Sprintf("feeAmount %s is greater than amount %s", feeAmount.String(), amount.String()))
 		}
 
-		feeAddressAcc := sdk.AccAddress(args.FeeAddress)
 		if feeAddressAcc.Empty() {
 			return types.ErrUnLock("FeeAmount is present but FeeAddress is empty")
 		}
@@ -376,17 +378,6 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 		if err := k.supplyKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, feeAddressAcc, feeCoins); err != nil {
 			return types.ErrUnLock(fmt.Sprintf("supplyKeeper.SendCoinsFromModuleToAccount, Error: send coins:%s from Module account:%s to receiver account:%s error", feeCoins.String(), k.GetModuleAccount(ctx).GetAddress().String(), feeAddressAcc.String()))
 		}
-
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				types.EventTypeUnlock,
-				sdk.NewAttribute(types.AttributeKeyToChainAssetHash, hex.EncodeToString([]byte(toAssetDenom))),
-				sdk.NewAttribute(types.AttributeKeyToAddress, feeAddressAcc.String()),
-				sdk.NewAttribute(types.AttributeKeyAmount, feeAmount.String()),
-				sdk.NewAttribute(types.AttributeKeyFromAddress, fromAcctAddress.String()),
-				sdk.NewAttribute(types.AttributeKeyIsFee, "1"),
-			),
-		})
 	}
 
 	// mint coin of sourceAssetDenom
@@ -408,7 +399,9 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 			sdk.NewAttribute(types.AttributeKeyToAddress, toAcctAddress.String()),
 			sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 			sdk.NewAttribute(types.AttributeKeyFromAddress, fromAcctAddress.String()),
-			sdk.NewAttribute(types.AttributeKeyIsFee, "0"),
+			sdk.NewAttribute(types.AttributeKeySourceAssetHash, hex.EncodeToString(fromAssetHash)),
+			sdk.NewAttribute(types.AttributeKeyFeeAmount, feeAmount.String()),
+			sdk.NewAttribute(types.AttributeKeyFeeAddress, feeAddressAcc.String()),
 		),
 	})
 	return nil
