@@ -283,7 +283,10 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 
 		afterFeeAmount = value.Sub(feeAmount)
 		feeCoins := sdk.NewCoins(sdk.NewCoin(sourceAssetDenom, feeAmount))
-		k.bankKeeper.SendCoins(ctx, fromAddress, feeAddress, feeCoins)
+		err := k.bankKeeper.SendCoins(ctx, fromAddress, feeAddress, feeCoins)
+		if err != nil {
+			return types.ErrLock(fmt.Sprintf("bankKeeper.SendCoins Error: from: %s, amount: %s", fromAddress.String(), feeCoins.String()))
+		}
 
 		args.Amount = afterFeeAmount.BigInt()
 		args.FeeAmount = big.NewInt(0)
