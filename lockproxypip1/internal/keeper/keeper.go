@@ -361,10 +361,6 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 		return types.ErrUnLock("FromAddress is empty")
 	}
 
-	if err := k.EnsureAccountExist(ctx, toAddress); err != nil {
-		return err
-	}
-
 	afterFeeAmount := amount
 	feeAddressAcc := sdk.AccAddress(args.FeeAddress)
 	if feeAmount.GT(sdk.ZeroInt()) {
