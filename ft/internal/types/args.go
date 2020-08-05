@@ -29,9 +29,9 @@ type TxArgs struct {
 	Amount    *big.Int
 }
 
-func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) error {
+func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intBsLen int) error {
 	sink.WriteVarBytes(this.ToAddress)
-	paddedAmountBs, err := common.Pad32Bytes(this.Amount, intLen)
+	paddedAmountBs, err := common.PadFixedBytes(this.Amount, intBsLen)
 	if err != nil {
 		return fmt.Errorf("TxArgs Serialization error:%v", err)
 	}
@@ -39,16 +39,16 @@ func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) err
 	return nil
 }
 
-func (this *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen int) error {
+func (this *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intBsLen int) error {
 	toAddress, eof := source.NextVarBytes()
 	if eof {
 		return fmt.Errorf("TxArgs deserialize ToAddress error")
 	}
-	paddedAmountBs, eof := source.NextBytes(uint64(intLen))
+	paddedAmountBs, eof := source.NextBytes(uint64(intBsLen))
 	if eof {
 		return fmt.Errorf("TxArgs deserialize Amount error")
 	}
-	amount, err := common.Unpad32Bytes(paddedAmountBs, intLen)
+	amount, err := common.UnpadFixedBytes(paddedAmountBs, intBsLen)
 	if err != nil {
 		return fmt.Errorf("TxArgs Deserialization error:%v", err)
 	}
