@@ -39,12 +39,12 @@ func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) err
 	sink.WriteVarBytes(this.FromAssetHash)
 	sink.WriteVarBytes(this.ToAssetHash)
 	sink.WriteVarBytes(this.ToAddress)
-	paddedAmountBs, err := common.Pad32Bytes(this.Amount, intLen)
+	paddedAmountBs, err := common.PadFixedBytes(this.Amount, intLen)
 	if err != nil {
 		return fmt.Errorf("TxArgs Serialization error:%v", err)
 	}
 	sink.WriteBytes(paddedAmountBs)
-	paddedFeeAmountBs, err := common.Pad32Bytes(this.FeeAmount, intLen)
+	paddedFeeAmountBs, err := common.PadFixedBytes(this.FeeAmount, intLen)
 	if err != nil {
 		return fmt.Errorf("TxArgs Serialization error:%v", err)
 	}
@@ -71,7 +71,7 @@ func (this *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen in
 	if eof {
 		return fmt.Errorf("TxArgs deserialize Amount error")
 	}
-	amount, err := common.Unpad32Bytes(paddedAmountBs, intLen)
+	amount, err := common.UnpadFixedBytes(paddedAmountBs, intLen)
 	if err != nil {
 		return fmt.Errorf("TxArgs Deserialization error:%v", err)
 	}
@@ -79,7 +79,7 @@ func (this *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen in
 	if eof {
 		return fmt.Errorf("TxArgs deserialize FeeAmount error")
 	}
-	feeAmount, err := common.Unpad32Bytes(paddedFeeAmountBs, intLen)
+	feeAmount, err := common.UnpadFixedBytes(paddedFeeAmountBs, intLen)
 	if err != nil {
 		return fmt.Errorf("TxArgs Deserialization error:%v", err)
 	}
