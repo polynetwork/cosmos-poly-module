@@ -194,7 +194,9 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 
 	sourceAssetHash := []byte(sourceAssetDenom)
 	toChainAssetHash := store.Get(GetBindAssetHashKey(lockProxyHash, sourceAssetHash, toChainId))
-
+	if len(toChainAssetHash) == 0 {
+		return types.ErrLock(fmt.Sprintf("Not bind asset hash yet for denom: %s at lockproxy: %x or %s", sourceAssetDenom, lockProxyHash, sdk.AccAddress(lockProxyHash).String()))
+	}
 	// get target asset hash from storage
 	sink := polycommon.NewZeroCopySink(nil)
 	args := types.TxArgs{
