@@ -26,7 +26,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/cosmos/cosmos-sdk/x/supply/exported"
 	selfexported "github.com/polynetwork/cosmos-poly-module/lockproxypip1/exported"
 	"github.com/polynetwork/cosmos-poly-module/lockproxypip1/internal/types"
@@ -220,12 +219,6 @@ func (k Keeper) CreateCoinAndDelegateToProxy(ctx sdk.Context, creator sdk.AccAdd
 	if err := k.UpdateRegistry(ctx, lockproxyHash, []byte(coin.Denom), nativeChainId, nativeLockProxyHash, nativeAssetHash); err != nil {
 		return err
 	}
-
-	totalSupply := sdk.NewCoins(sdk.Coin{
-		Denom:  coin.Denom,
-		Amount: sdk.ZeroInt(),
-	})
-	k.supplyKeeper.SetSupply(ctx, supply.NewSupply(totalSupply))
 
 	if err := k.supplyKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(coin)); err != nil {
 		return types.ErrCreateCoinAndDelegateToProxy(fmt.Sprintf("supplyKeeper.MintCoins Error: %s", err.Error()))
