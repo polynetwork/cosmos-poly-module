@@ -35,70 +35,70 @@ type TxArgs struct {
 	FromAddress   []byte
 }
 
-func (this *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) error {
-	sink.WriteVarBytes(this.FromAssetHash)
-	sink.WriteVarBytes(this.ToAssetHash)
-	sink.WriteVarBytes(this.ToAddress)
-	paddedAmountBs, err := common.PadFixedBytes(this.Amount, intLen)
+func (txargs *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) error {
+	sink.WriteVarBytes(txargs.FromAssetHash)
+	sink.WriteVarBytes(txargs.ToAssetHash)
+	sink.WriteVarBytes(txargs.ToAddress)
+	paddedAmountBs, err := common.PadFixedBytes(txargs.Amount, intLen)
 	if err != nil {
-		return fmt.Errorf("TxArgs Serialization error:%v", err)
+		return fmt.Errorf("serialization error:%v", err)
 	}
 	sink.WriteBytes(paddedAmountBs)
-	paddedFeeAmountBs, err := common.PadFixedBytes(this.FeeAmount, intLen)
+	paddedFeeAmountBs, err := common.PadFixedBytes(txargs.FeeAmount, intLen)
 	if err != nil {
-		return fmt.Errorf("TxArgs Serialization error:%v", err)
+		return fmt.Errorf("serialization error:%v", err)
 	}
 	sink.WriteBytes(paddedFeeAmountBs)
-	sink.WriteVarBytes(this.FeeAddress)
-	sink.WriteVarBytes(this.FromAddress)
+	sink.WriteVarBytes(txargs.FeeAddress)
+	sink.WriteVarBytes(txargs.FromAddress)
 	return nil
 }
 
-func (this *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen int) error {
+func (txargs *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen int) error {
 	fromAssetHash, eof := source.NextVarBytes()
 	if eof {
-		return fmt.Errorf("TxArgs deserialize fromAssetHash error")
+		return fmt.Errorf("deserialize fromAssetHash error")
 	}
 	toAssetHash, eof := source.NextVarBytes()
 	if eof {
-		return fmt.Errorf("TxArgs deserialize toAssetHash error")
+		return fmt.Errorf("deserialize toAssetHash error")
 	}
 	toAddress, eof := source.NextVarBytes()
 	if eof {
-		return fmt.Errorf("TxArgs deserialize ToAddress error")
+		return fmt.Errorf("deserialize ToAddress error")
 	}
 	paddedAmountBs, eof := source.NextBytes(uint64(intLen))
 	if eof {
-		return fmt.Errorf("TxArgs deserialize Amount error")
+		return fmt.Errorf("deserialize Amount error")
 	}
 	amount, err := common.UnpadFixedBytes(paddedAmountBs, intLen)
 	if err != nil {
-		return fmt.Errorf("TxArgs Deserialization error:%v", err)
+		return fmt.Errorf("deserialization error:%v", err)
 	}
 	paddedFeeAmountBs, eof := source.NextBytes(uint64(intLen))
 	if eof {
-		return fmt.Errorf("TxArgs deserialize FeeAmount error")
+		return fmt.Errorf("deserialize FeeAmount error")
 	}
 	feeAmount, err := common.UnpadFixedBytes(paddedFeeAmountBs, intLen)
 	if err != nil {
-		return fmt.Errorf("TxArgs Deserialization error:%v", err)
+		return fmt.Errorf("deserialization error:%v", err)
 	}
 	feeAddress, eof := source.NextVarBytes()
 	if eof {
-		return fmt.Errorf("TxArgs deserialize FeeAddress error")
+		return fmt.Errorf("deserialize FeeAddress error")
 	}
 
 	fromAddress, eof := source.NextVarBytes()
 	if eof {
-		return fmt.Errorf("TxArgs deserialize FromAddress error")
+		return fmt.Errorf("deserialize FromAddress error")
 	}
 
-	this.FromAssetHash = fromAssetHash
-	this.ToAssetHash = toAssetHash
-	this.ToAddress = toAddress
-	this.Amount = amount
-	this.FeeAmount = feeAmount
-	this.FeeAddress = feeAddress
-	this.FromAddress = fromAddress
+	txargs.FromAssetHash = fromAssetHash
+	txargs.ToAssetHash = toAssetHash
+	txargs.ToAddress = toAddress
+	txargs.Amount = amount
+	txargs.FeeAmount = feeAmount
+	txargs.FeeAddress = feeAddress
+	txargs.FromAddress = fromAddress
 	return nil
 }
