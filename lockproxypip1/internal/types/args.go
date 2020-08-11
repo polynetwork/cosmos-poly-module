@@ -33,6 +33,7 @@ type TxArgs struct {
 	FeeAmount     *big.Int
 	FeeAddress    []byte
 	FromAddress   []byte
+	Nonce         *big.Int
 }
 
 func (txargs *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) error {
@@ -51,6 +52,11 @@ func (txargs *TxArgs) Serialization(sink *polycommon.ZeroCopySink, intLen int) e
 	sink.WriteBytes(paddedFeeAmountBs)
 	sink.WriteVarBytes(txargs.FeeAddress)
 	sink.WriteVarBytes(txargs.FromAddress)
+	paddedNonceBs, err := common.PadFixedBytes(txargs.Nonce, intLen)
+	if err != nil {
+		return fmt.Errorf("serialization error:%v", err)
+	}
+	sink.WriteBytes(paddedNonceBs)
 	return nil
 }
 
@@ -87,10 +93,17 @@ func (txargs *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen 
 	if eof {
 		return fmt.Errorf("deserialize FeeAddress error")
 	}
-
 	fromAddress, eof := source.NextVarBytes()
 	if eof {
 		return fmt.Errorf("deserialize FromAddress error")
+	}
+	paddedNonceBs, eof := source.NextBytes(uint64(intLen))
+	if eof {
+		return fmt.Errorf("deserialize Nonce error")
+	}
+	nonce, err := common.UnpadFixedBytes(paddedNonceBs, intLen)
+	if err != nil {
+		return fmt.Errorf("deserialization error:%v", err)
 	}
 
 	txargs.FromAssetHash = fromAssetHash
@@ -100,5 +113,6 @@ func (txargs *TxArgs) Deserialization(source *polycommon.ZeroCopySource, intLen 
 	txargs.FeeAmount = feeAmount
 	txargs.FeeAddress = feeAddress
 	txargs.FromAddress = fromAddress
+	txargs.Nonce = nonce
 	return nil
 }
