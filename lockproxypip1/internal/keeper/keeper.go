@@ -249,11 +249,34 @@ func (k Keeper) CreateCoinAndDelegateToProxy(ctx sdk.Context, creator sdk.AccAdd
 	return nil
 }
 
+func (k Keeper) getNextNonce(ctx sdk.Context) sdk.Int {
+	store := ctx.KVStore(k.storeKey)
+
+	nonce := sdk.ZeroInt()
+	nonceBz := store.Get(NonceKey)
+	if nonceBz != nil {
+		err := k.cdc.UnmarshalBinaryLengthPrefixed(nonceBz, &nonce)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	newNonce := nonce.Add(sdk.NewInt(1))
+	newNonceBz, err := k.cdc.MarshalBinaryLengthPrefixed(newNonce)
+	if err != nil {
+		panic(err)
+	}
+	store.Set(NonceKey, newNonceBz)
+
+	return newNonce
+}
+
 func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccAddress, sourceAssetDenom string, toChainId uint64, toChainProxyHash []byte, toChainAssetHash []byte, toAddressBs []byte, value sdk.Int, deductFeeInLock bool, feeAmount sdk.Int, feeAddress []byte) error {
 	if exist := k.EnsureLockProxyExist(ctx, lockProxyHash); !exist {
 		return types.ErrLock(fmt.Sprintf("lockproxy with hash: %s not created", lockProxyHash))
 	}
 
+	nonce := k.getNextNonce(ctx)
 	args := types.TxArgs{
 		FromAssetHash: []byte(sourceAssetDenom),
 		ToAssetHash:   toChainAssetHash,
@@ -261,6 +284,7 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 		Amount:        value.BigInt(),
 		FeeAmount:     feeAmount.BigInt(),
 		FeeAddress:    feeAddress,
+		Nonce:         nonce.BigInt(),
 	}
 
 	afterFeeAmount := value

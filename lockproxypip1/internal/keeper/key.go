@@ -36,6 +36,7 @@ var (
 	BindChainIdPrefix      = []byte{0x02}
 	RegistryPrefix         = []byte{0x03}
 	BalancePrefix          = []byte{0x04}
+	NonceKey               = []byte("nonce")
 )
 
 func GetOperatorToLockProxyKey(operator sdk.AccAddress) []byte {
