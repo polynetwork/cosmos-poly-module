@@ -346,6 +346,7 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 			sdk.NewAttribute(types.AttributeKeyLockProxy, hex.EncodeToString(fromContractHash)),
 			sdk.NewAttribute(types.AttributeKeyFeeAmount, feeAmount.String()),
 			sdk.NewAttribute(types.AttributeKeyFeeAddress, feeAddressAcc.String()),
+			sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
 		),
 	})
 
