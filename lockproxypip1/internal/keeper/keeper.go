@@ -362,6 +362,7 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 	toAddress := args.ToAddress
 	amount := sdk.NewIntFromBigInt(args.Amount)
 	feeAmount := sdk.NewIntFromBigInt(args.FeeAmount)
+	nonce := sdk.NewIntFromBigInt(args.Nonce)
 
 	if !k.AssetIsRegistered(ctx, toContractAddr, toAssetHash, fromChainId, fromContractAddr, fromAssetHash) {
 		return types.ErrUnLock(fmt.Sprintf("missing asset registry: toContractAddr: %s, toAssetHash: %s, fromChainId: %d, fromContractAddr: %s, fromAssetHash: %s", string(toContractAddr), toAssetHash, fromChainId, hex.EncodeToString(fromContractAddr), hex.EncodeToString(fromAssetHash)))
@@ -418,6 +419,7 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 			sdk.NewAttribute(types.AttributeKeySourceAssetHash, hex.EncodeToString(fromAssetHash)),
 			sdk.NewAttribute(types.AttributeKeyFeeAmount, feeAmount.String()),
 			sdk.NewAttribute(types.AttributeKeyFeeAddress, feeAddressAcc.String()),
+			sdk.NewAttribute(types.AttributeKeyNonce, nonce.String()),
 		),
 	})
 	return nil
