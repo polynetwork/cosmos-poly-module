@@ -84,7 +84,7 @@ func (k Keeper) Lock(ctx sdk.Context, fromAddr sdk.AccAddress, sourceAssetDenom 
 	toAssetHash := ctx.KVStore(k.storeKey).Get(GetBindAssetHashKey([]byte(sourceAssetDenom), toChainId))
 	// ensure toAssetHash is not empty
 	if toAssetHash == nil {
-		return types.ErrLock(fmt.Sprintf("toAssetHash is empty"))
+		return types.ErrLock("toAssetHash is empty")
 	}
 	// invoke cross_chain_manager module to construct cosmos proof
 	if err := k.ccmKeeper.CreateCrossChainTx(ctx, fromAddr, toChainId, []byte(sourceAssetDenom), toAssetHash, "unlock", sink.Bytes()); err != nil {
