@@ -97,8 +97,12 @@ func (k Keeper) SetDenomCreator(ctx sdk.Context, denom string, creator sdk.AccAd
 	ctx.KVStore(k.storeKey).Set(GetDenomToCreatorKey(denom), creator.Bytes())
 }
 
-func (k Keeper) GetDenomCreator(ctx sdk.Context, denom string) sdk.AccAddress {
-	return ctx.KVStore(k.storeKey).Get(GetDenomToCreatorKey(denom))
+func (k Keeper) GetDenomCreator(ctx sdk.Context, denom string) (addr sdk.AccAddress) {
+	creator := GetDenomToCreatorKey(denom)
+	if creator == nil {
+		return
+	}
+	return ctx.KVStore(k.storeKey).Get(creator)
 }
 
 func (k Keeper) ExistDenom(ctx sdk.Context, denom string) (string, bool) {
@@ -257,7 +261,11 @@ func (k Keeper) VerifyToCosmosTx(ctx sdk.Context, proof []byte, header *polytype
 
 func (k Keeper) checkDoneTx(ctx sdk.Context, fromChainId uint64, crossChainId []byte) error {
 	store := ctx.KVStore(k.storeKey)
-	value := store.Get(GetDoneTxKey(fromChainId, crossChainId))
+	txKey := GetDoneTxKey(fromChainId, crossChainId)
+	if txKey == nil {
+		return fmt.Errorf("checkDoneTx, can't find tx key with fromChainId %d and crossChainId %v", fromChainId, crossChainId)
+	}
+	value := store.Get(txKey)
 	if value != nil {
 		return fmt.Errorf("checkDoneTx, tx already done")
 	}
