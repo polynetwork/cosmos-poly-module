@@ -155,7 +155,7 @@ $ %s query %s proxy-hash e931a4f7020caaacf3ce942567625ebbc0a0ab35 stake 2
 Or
 $ %s query %s proxy-hash cosmos1ayc6faczpj42eu7wjsjkwcj7h0q2p2e4vrlkzf stake 2
 `,
-				version.ClientName, types.ModuleName,
+				version.ClientName, types.ModuleName, version.ClientName, types.ModuleName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
