@@ -49,8 +49,8 @@ func (msg MsgCreateDenom) ValidateBasic() error {
 	if msg.Creator.Empty() {
 		return sdkerrors.ErrInvalidAddress
 	}
-	if _, err := sdk.ParseCoin("100" + msg.Denom); err != nil {
-		return ErrMsgCreateDenom(fmt.Sprintf("MsgCreateDenom.Denom:%s is invalid", msg.Denom))
+	if err := sdk.ValidateDenom(msg.Denom); err != nil {
+		return ErrMsgCreateDenom(fmt.Sprintf("MsgCreateDenom.Denom:%s is invalid, err: %v", msg.Denom, err))
 	}
 	return nil
 }
@@ -93,10 +93,10 @@ func (msg MsgBindAssetHash) ValidateBasic() error {
 	if msg.Creator.Empty() {
 		return sdkerrors.ErrInvalidAddress
 	}
-	if msg.SourceAssetDenom == "" {
-		return ErrMsgBindAssetHash(fmt.Sprintf("empty MsgBindAssetHash.SourceAssetDenom"))
+	if err := sdk.ValidateDenom(msg.SourceAssetDenom); err != nil {
+		return ErrMsgBindAssetHash(fmt.Sprintf("MsgBindAssetHash.SourceAssetDenom: %s is invalid, err: %v", msg.SourceAssetDenom, err))
 	}
-	if msg.ToChainId <= 0 {
+	if msg.ToChainId == 0 {
 		return ErrMsgBindAssetHash(fmt.Sprintf("invalid MsgBindAssetHash.ToChainId: %d", msg.ToChainId))
 	}
 	if len(msg.ToAssetHash) == 0 {
@@ -149,10 +149,10 @@ func (msg MsgLock) ValidateBasic() error {
 	if msg.FromAddress.Empty() {
 		return sdkerrors.ErrInvalidAddress
 	}
-	if msg.SourceAssetDenom == "" {
-		return ErrMsgLock(fmt.Sprintf("empty MsgBindAssetHash.SourceAssetDenom"))
+	if err := sdk.ValidateDenom(msg.SourceAssetDenom); err != nil {
+		return ErrMsgLock(fmt.Sprintf("MsgBindAssetHash.SourceAssetDenom: %s is invalid, err: %v", msg.SourceAssetDenom, err))
 	}
-	if msg.ToChainId <= 0 {
+	if msg.ToChainId == 0 {
 		return ErrInvalidChainId(msg.ToChainId)
 	}
 	if len(msg.ToAddressBs) == 0 {

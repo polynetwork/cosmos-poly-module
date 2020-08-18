@@ -107,7 +107,6 @@ func (k Keeper) GetDenomCreator(ctx sdk.Context, denom string) (addr sdk.AccAddr
 
 func (k Keeper) ExistDenom(ctx sdk.Context, denom string) (string, bool) {
 	storedSupplyCoins := k.supplyKeeper.GetSupply(ctx).GetTotal()
-	//return storedSupplyCoins.AmountOf(denom) != sdk.ZeroInt() || len(k.GetOperator(ctx, denom)) != 0
 	if len(k.GetDenomCreator(ctx, denom)) != 0 {
 		return fmt.Sprintf("ccmKeeper.GetDenomCreator(ctx,%s) is %s", denom, sdk.AccAddress(k.GetDenomCreator(ctx, denom)).String()), true
 	}

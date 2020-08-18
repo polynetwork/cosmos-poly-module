@@ -102,6 +102,9 @@ func (k Keeper) BindAssetHash(ctx sdk.Context, creator sdk.AccAddress, sourceAss
 		return types.ErrBindAssetHash(fmt.Sprintf("BindAssetHash, creator is not valid, expect:%s, got:%s", k.ccmKeeper.GetDenomCreator(ctx, sourceAssetDenom).String(), creator.String()))
 	}
 	store := ctx.KVStore(k.storeKey)
+	if !bytes.Equal(creator.Bytes(), store.Get(GetDenomToCreatorKey(sourceAssetDenom))) {
+		return types.ErrBindAssetHash(fmt.Sprintf("BindAssetHash, creator: %s created Denom: %s, yet not in %s module", creator.String(), sourceAssetDenom, types.ModuleName))
+	}
 	store.Set(GetBindAssetHashKey([]byte(sourceAssetDenom), toChainId), toAssetHash)
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -134,6 +137,9 @@ func (k Keeper) Lock(ctx sdk.Context, fromAddr sdk.AccAddress, sourceAssetDenom 
 			return types.ErrLock(fmt.Sprintf("Creator of denom: %s is Empty", sourceAssetDenom))
 		}
 		redeemScript := store.Get(GetScriptHashToRedeemScript(store.Get(GetCreatorDenomToScriptHashKey(creator, sourceAssetDenom))))
+		if len(redeemScript) == 0 {
+			return types.ErrLock(fmt.Sprintf("Invoke Lock of `btcx` module, denom: %s, toChainId: %d, redeemScript not exist", sourceAssetDenom, toChainId))
+		}
 		toBtcArgs := types.ToBTCArgs{
 			ToBtcAddress: toAddr,
 			Amount:       amount.BigInt().Uint64(),
@@ -182,6 +188,9 @@ func (k Keeper) Unlock(ctx sdk.Context, fromChainId uint64, fromContractAddr sdk
 	}
 	store := ctx.KVStore(k.storeKey)
 	fromAssetHash := store.Get(GetBindAssetHashKey(toContractAddr, fromChainId))
+	if len(fromAssetHash) == 0 {
+		return types.ErrUnLock(fmt.Sprintf("fromAssetHash not exist for toContractAddr: %x, fromChainId: %d", toContractAddr, fromChainId))
+	}
 	if !bytes.Equal(fromContractAddr, fromAssetHash) {
 		return types.ErrUnLock(fmt.Sprintf("fromContractaddr:%x is not the stored assetHash:%x", fromContractAddr, fromAssetHash))
 	}

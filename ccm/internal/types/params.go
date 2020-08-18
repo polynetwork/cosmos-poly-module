@@ -56,7 +56,7 @@ func validateChainId(i interface{}) error {
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-	if v <= 0 {
+	if v == 0 {
 		return fmt.Errorf("ChainId for Poly Chain Network needs to be configured manually, and non-zero, got: %d", v)
 	}
 	return nil
