@@ -37,21 +37,23 @@ import (
 func TestN_headersync_Querier(t *testing.T) {
 	app, ctx := createTestApp(true)
 
-	err := app.HeaderSyncKeeper.SyncGenesisHeader(ctx, header0)
+	h0s, _ := hex.DecodeString(header0)
+	h0 := new(polytype.Header)
+	err := h0.Deserialization(polycommon.NewZeroCopySource(h0s))
+	assert.Nil(t, err)
+
+	err = app.HeaderSyncKeeper.SyncGenesisHeader(ctx, header0)
 	assert.Nil(t, err, "Sync genesis header fail")
 
 	querier := keep.NewQuerier(app.HeaderSyncKeeper)
 	// query synced Poly Chain consensus peer
 	query := abci.RequestQuery{
 		Path: fmt.Sprintf("custom/%s/%s", headersync.StoreKey, types.QueryConsensusPeers),
-		Data: app.Codec().MustMarshalJSON(types.NewQueryConsensusPeersParams(391549339)),
+		Data: app.Codec().MustMarshalJSON(types.NewQueryConsensusPeersParams(h0.ChainID)),
 	}
 	cpBs, err := querier(ctx, []string{types.QueryConsensusPeers}, query)
 	require.NoError(t, err)
-	h0 := new(polytype.Header)
-	h0s, _ := hex.DecodeString(header0)
-	err = h0.Deserialization(polycommon.NewZeroCopySource(h0s))
-	assert.Nil(t, err)
+
 	consensusPeersBs, err := ExtractChainConfig(h0)
 	assert.Nil(t, err)
 	require.Equal(t, consensusPeersBs, cpBs, "Synced consensus 0 is not equal to the querier result")
