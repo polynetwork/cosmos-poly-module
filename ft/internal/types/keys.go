@@ -17,9 +17,6 @@
 
 package types
 
-// the one key to use for the keeper store
-var OperatorKey = []byte{0x00}
-
 // nolint
 const (
 	// module name

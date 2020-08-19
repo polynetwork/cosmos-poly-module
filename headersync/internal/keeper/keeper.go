@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/polynetwork/cosmos-poly-module/headersync/internal/types"
 	polycommon "github.com/polynetwork/poly/common"
 	vconfig "github.com/polynetwork/poly/consensus/vbft/config"
@@ -35,9 +34,8 @@ import (
 
 // Keeper of the mint store
 type Keeper struct {
-	cdc        *codec.Codec
-	storeKey   sdk.StoreKey
-	paramSpace params.Subspace
+	cdc      *codec.Codec
+	storeKey sdk.StoreKey
 }
 
 // NewKeeper creates a new mint Keeper instance

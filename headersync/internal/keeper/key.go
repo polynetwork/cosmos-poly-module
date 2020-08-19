@@ -19,12 +19,6 @@ package keeper
 
 import (
 	"encoding/binary"
-	"github.com/polynetwork/cosmos-poly-module/headersync/internal/types"
-)
-
-const (
-	// default paramspace for params keeper
-	DefaultParamspace = types.ModuleName
 )
 
 var (

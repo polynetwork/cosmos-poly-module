@@ -27,7 +27,6 @@ const (
 	DefaultParamspace             = types.DefaultParamspace
 	StoreKey                      = types.StoreKey
 	QuerierRoute                  = types.QuerierRoute
-	QueryParameters               = types.QueryParameters
 	QueryConsensusPeers           = types.QueryConsensusPeers
 	RouterKey                     = types.RouterKey
 	AttributeValueCategory        = types.AttributeValueCategory

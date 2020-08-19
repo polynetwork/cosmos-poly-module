@@ -28,6 +28,7 @@ import (
 	"github.com/polynetwork/cosmos-poly-module/btcx/internal/types"
 	polycommon "github.com/polynetwork/poly/common"
 	"github.com/tendermint/tendermint/libs/log"
+	"math"
 	"math/big"
 	"strconv"
 )
@@ -121,6 +122,9 @@ func (k Keeper) Lock(ctx sdk.Context, fromAddr sdk.AccAddress, sourceAssetDenom 
 	toAssetHash := store.Get(GetBindAssetHashKey([]byte(sourceAssetDenom), toChainId))
 	if toAssetHash == nil {
 		return types.ErrLock(fmt.Sprintf("Invoke Lock of `btcx` module for denom: %s is illgeal due to toAssetHash empty for chainId: %d", sourceAssetDenom, toChainId))
+	}
+	if amount.GTE(sdk.NewIntFromUint64(math.MaxUint64)) {
+		return types.ErrLock(fmt.Sprintf("Invoke Lock of `btcx` module, amount: %s too big than MaxUint64", amount.String()))
 	}
 	sink := polycommon.NewZeroCopySink(nil)
 	// construct args bytes
