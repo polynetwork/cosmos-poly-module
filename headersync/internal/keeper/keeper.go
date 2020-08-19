@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -118,7 +117,8 @@ func (keeper Keeper) VerifyHeaderSig(ctx sdk.Context, header *polytype.Header) e
 		return types.ErrSyncBlockHeader("GetConsensusPeer", header.ChainID, header.Height, err)
 	}
 	if header.Height <= consensusPeer.Height {
-		return types.ErrSyncBlockHeader("Compare height", header.ChainID, header.Height, errors.New(fmt.Sprintf("Stored consensus header.Height: %d, trying to sync height:%d", consensusPeer.Height, header.Height)))
+		return types.ErrSyncBlockHeader("Compare height", header.ChainID, header.Height,
+			fmt.Errorf("Stored consensus header.Height: %d, trying to sync height:%d", consensusPeer.Height, header.Height))
 	}
 
 	if len(header.Bookkeepers)*3 < len(consensusPeer.PeerMap)*2 {
