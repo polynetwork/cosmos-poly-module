@@ -263,11 +263,11 @@ func (k Keeper) checkDoneTx(ctx sdk.Context, fromChainId uint64, crossChainId []
 	store := ctx.KVStore(k.storeKey)
 	txKey := GetDoneTxKey(fromChainId, crossChainId)
 	if txKey == nil {
-		return fmt.Errorf("checkDoneTx, can't find tx key with fromChainId %d and crossChainId %v", fromChainId, crossChainId)
+		return fmt.Errorf("checkDoneTx, can't find tx key with fromChainId %d and crossChainId %x", fromChainId, crossChainId)
 	}
 	value := store.Get(txKey)
 	if value != nil {
-		return fmt.Errorf("checkDoneTx, tx already done")
+		return fmt.Errorf("checkDoneTx, tx already done with fromChainId: %d, crossChainId: %x", fromChainId, crossChainId)
 	}
 	return nil
 }
