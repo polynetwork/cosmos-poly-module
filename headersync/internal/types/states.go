@@ -112,7 +112,6 @@ func (this *ConsensusPeers) String() string {
 	return fmt.Sprintf(`
 	ChainID          : %d
 	Height           : %d
-	PeerMap		     : 
-%s	
+	PeerMap		     : %s	
 `, this.ChainID, this.Height, fmt.Sprintf("%s", peerMapStr))
 }

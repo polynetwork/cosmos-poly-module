@@ -69,8 +69,7 @@ var (
 
 	// key function
 
-	ModuleCdc   = types.ModuleCdc
-	OperatorKey = types.OperatorKey
+	ModuleCdc = types.ModuleCdc
 
 	ErrInvalidChainId = types.ErrInvalidChainId
 

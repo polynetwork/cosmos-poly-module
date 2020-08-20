@@ -114,7 +114,6 @@ func (k Keeper) CreateCoinAndDelegateToProxy(ctx sdk.Context, creator sdk.AccAdd
 		return types.ErrCreateCoinAndDelegateToProxy(fmt.Sprintf("lockproxy with hash: %s not created", lockproxyHash))
 
 	}
-	//k.SetOperator(ctx, denom, creator)
 	k.ccmKeeper.SetDenomCreator(ctx, coin.Denom, creator)
 
 	if err := k.supplyKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(coin)); err != nil {
@@ -190,12 +189,12 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 	if err := k.supplyKeeper.SendCoinsFromAccountToModule(ctx, fromAddress, types.ModuleName, amt); err != nil {
 		return types.ErrLock(fmt.Sprintf("supplyKeeper.SendCoinsFromAccountToModule Error: from: %s, moduleAccount: %s of moduleName: %s, amount: %s", fromAddress.String(), k.supplyKeeper.GetModuleAccount(ctx, types.ModuleName).GetAddress(), types.ModuleName, amt.String()))
 	}
-	store := ctx.KVStore(k.storeKey)
 
+	store := ctx.KVStore(k.storeKey)
 	sourceAssetHash := []byte(sourceAssetDenom)
 	toChainAssetHash := store.Get(GetBindAssetHashKey(lockProxyHash, sourceAssetHash, toChainId))
 	if len(toChainAssetHash) == 0 {
-		return types.ErrLock(fmt.Sprintf("Not bind asset hash yet for denom: %s at lockproxy: %x or %s", sourceAssetDenom, lockProxyHash, sdk.AccAddress(lockProxyHash).String()))
+		return types.ErrLock(fmt.Sprintf("toChainAssetHash not exist for lockproxyHash: %x / %s, denom: %s, toChainId: %d", lockProxyHash, sdk.AccAddress(lockProxyHash).String(), sourceAssetDenom, toChainId))
 	}
 	// get target asset hash from storage
 	sink := polycommon.NewZeroCopySink(nil)
@@ -231,7 +230,6 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 			sdk.NewAttribute(types.AttributeKeyLockProxy, hex.EncodeToString(fromContractHash)),
 		),
 	})
-
 	return nil
 }
 

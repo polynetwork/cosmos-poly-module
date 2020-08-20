@@ -206,5 +206,4 @@ func Test_btcx_MsgLock(t *testing.T) {
 
 	balance = app.BankKeeper.GetCoins(ctx, creator)
 	require.Equal(t, "97btcx1", balance.String(), "balnace of creator is not balanced")
-
 }

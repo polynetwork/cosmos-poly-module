@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/supply/exported"
 	"github.com/polynetwork/cosmos-poly-module/ft/internal/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -31,7 +30,6 @@ import (
 type Keeper struct {
 	cdc          *codec.Codec
 	storeKey     sdk.StoreKey
-	paramSpace   params.Subspace
 	authKeeper   types.AccountKeeper
 	bankKeeper   types.BankKeeper
 	supplyKeeper types.SupplyKeeper

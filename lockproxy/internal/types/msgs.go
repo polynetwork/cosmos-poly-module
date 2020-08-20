@@ -68,12 +68,6 @@ func (msg MsgCreateLockProxy) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-type MsgBindProxyHash struct {
-	Operator         sdk.AccAddress
-	ToChainId        uint64
-	ToChainProxyHash []byte
-}
-
 // MsgSend - high level transaction of the coin module
 type MsgCreateCoinAndDelegateToProxy struct {
 	Creator       sdk.AccAddress
@@ -115,6 +109,12 @@ func (msg MsgCreateCoinAndDelegateToProxy) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
+type MsgBindProxyHash struct {
+	Operator         sdk.AccAddress
+	ToChainId        uint64
+	ToChainProxyHash []byte
+}
+
 func NewMsgBindProxyHash(operator sdk.AccAddress, toChainId uint64, toChainProxyHash []byte) MsgBindProxyHash {
 	return MsgBindProxyHash{operator, toChainId, toChainProxyHash}
 }
@@ -128,7 +128,7 @@ func (msg MsgBindProxyHash) ValidateBasic() error {
 	if msg.Operator.Empty() {
 		return sdkerrors.ErrInvalidAddress
 	}
-	if msg.ToChainId <= 0 {
+	if msg.ToChainId == 0 {
 		return ErrInvalidChainId(msg.ToChainId)
 	}
 	if len(msg.ToChainProxyHash) == 0 {
@@ -180,12 +180,12 @@ func (msg MsgBindAssetHash) ValidateBasic() error {
 	if msg.Operator.Empty() {
 		return sdkerrors.ErrInvalidAddress
 	}
-	if msg.SourceAssetDenom == "" {
-		return ErrMsgBindAssetHash("Empty MsgBindAssetHash.SourceAssetDenom")
+	if err := sdk.ValidateDenom(msg.SourceAssetDenom); err != nil {
+		return ErrMsgBindAssetHash(fmt.Sprintf("MsgBindAssetHash.SourceAssetDenom: %s is invalid, err: %v", msg.SourceAssetDenom, err))
 	} else if _, err := sdk.ParseCoin("10" + msg.SourceAssetDenom); err != nil {
 		return ErrMsgBindAssetHash(fmt.Sprintf("Invalid denom: %s", msg.SourceAssetDenom))
 	}
-	if msg.ToChainId <= 0 {
+	if msg.ToChainId == 0 {
 		return ErrInvalidChainId(msg.ToChainId)
 	}
 	if len(msg.ToAssetHash) == 0 {
@@ -242,10 +242,10 @@ func (msg MsgLock) ValidateBasic() error {
 	if msg.FromAddress.Empty() {
 		return sdkerrors.ErrInvalidAddress
 	}
-	if msg.SourceAssetDenom == "" {
-		return ErrMsgLock("empty MsgBindAssetHash.SourceAssetDenom")
+	if err := sdk.ValidateDenom(msg.SourceAssetDenom); err != nil {
+		return ErrMsgLock(fmt.Sprintf("MsgBindAssetHash.SourceAssetDenom: %s is invalid, err: %v", msg.SourceAssetDenom, err))
 	}
-	if msg.ToChainId <= 0 {
+	if msg.ToChainId == 0 {
 		return ErrInvalidChainId(msg.ToChainId)
 	}
 	if len(msg.ToAddressBs) == 0 {

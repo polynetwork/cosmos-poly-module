@@ -51,8 +51,8 @@ func (msg MsgCreateDenom) ValidateBasic() error {
 	if msg.Creator.Empty() {
 		return ErrCreateDenom("MsgCreateDenom.Creator is empty")
 	}
-	if _, err := sdk.ParseCoins("10" + msg.Denom); err != nil {
-		return ErrCreateDenom(fmt.Sprintf("MsgCreateDenom.Denom is illegal, Error:%v", err))
+	if err := sdk.ValidateDenom(msg.Denom); err != nil {
+		return ErrCreateDenom(fmt.Sprintf("MsgCreateDenom.Denom: %s is illegal, Error:%v", msg.Denom, err))
 	}
 	if _, err := hex.DecodeString(msg.RedeemScript); err != nil {
 		return ErrCreateDenom(fmt.Sprintf("MsgCreateDenom.RedeemScript: %s is not hex string format, Error:%v", msg.RedeemScript, err))
@@ -99,10 +99,10 @@ func (msg MsgBindAssetHash) ValidateBasic() error {
 	if msg.Creator.Empty() {
 		return ErrBindAssetHash(fmt.Sprintf("Empty address:%s", msg.Creator.String()))
 	}
-	if msg.SourceAssetDenom == "" {
-		return ErrCreateDenom("SourceAssetDenom is empty")
+	if err := sdk.ValidateDenom(msg.SourceAssetDenom); err != nil {
+		return ErrCreateDenom(fmt.Sprintf("MsgBindAssetHash.SourceAssetDenom: %s is invalid, err: %v", msg.SourceAssetDenom, err))
 	}
-	if msg.ToChainId <= 0 {
+	if msg.ToChainId == 0 {
 		return ErrInvalidChainId(msg.ToChainId)
 	}
 	if len(msg.ToAssetHash) == 0 {
@@ -152,10 +152,10 @@ func (msg MsgLock) ValidateBasic() error {
 	if msg.FromAddress.Empty() {
 		return ErrLock(fmt.Sprintf("MsgLock.FromAddress is empty, address:%s", msg.FromAddress.String()))
 	}
-	if msg.SourceAssetDenom == "" {
-		return ErrLock("SourceAssetDenom is empty")
+	if err := sdk.ValidateDenom(msg.SourceAssetDenom); err != nil {
+		return ErrLock(fmt.Sprintf("MsgLock.SourceAssetDenom: %s is invalid, err: %v", msg.SourceAssetDenom, err))
 	}
-	if msg.ToChainId <= 0 {
+	if msg.ToChainId == 0 {
 		return ErrInvalidChainId(msg.ToChainId)
 	}
 	if len(msg.ToAddressBs) == 0 {

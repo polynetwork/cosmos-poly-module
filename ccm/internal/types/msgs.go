@@ -100,7 +100,7 @@ func (msg MsgCreateCrossChainTx) Type() string  { return TypeMsgCreateCoins }
 
 // Implements Msg.
 func (msg MsgCreateCrossChainTx) ValidateBasic() error {
-	if msg.ToChainID <= 0 {
+	if msg.ToChainID == 0 {
 		return ErrMsgCreateCrossChainTx(fmt.Sprintf("invalid chainId: %d", msg.ToChainID))
 	}
 	if len(msg.ToContractAddress) == 0 {

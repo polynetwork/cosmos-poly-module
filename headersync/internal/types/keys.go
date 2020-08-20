@@ -33,7 +33,4 @@ const (
 
 	// RouterKey is the message route for gov
 	RouterKey = ModuleName
-
-	// Query endpoints supported by the minting querier
-	QueryParameters = "parameters"
 )
