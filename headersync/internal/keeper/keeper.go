@@ -64,6 +64,10 @@ func (keeper Keeper) SyncGenesisHeader(ctx sdk.Context, genesisHeaderStr string)
 	if err := keeper.UpdateConsensusPeer(ctx, genesisHeader); err != nil {
 		return err
 	}
+	// Make sure the header contains poly.NewChainConfig info
+	if _, err := keeper.GetConsensusPeers(ctx, genesisHeader.ChainID); err != nil {
+		return types.ErrSyncGenesisHeader(fmt.Sprintf("After UpdteConsensusPeer, Get Consensus Peers error: %v", err))
+	}
 	return nil
 }
 
