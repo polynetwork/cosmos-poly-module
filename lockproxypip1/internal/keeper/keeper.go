@@ -278,6 +278,7 @@ func (k Keeper) Lock(ctx sdk.Context, lockProxyHash []byte, fromAddress sdk.AccA
 
 	nonce := k.getNextNonce(ctx)
 	args := types.TxArgs{
+		FromAddress:   fromAddress,
 		FromAssetHash: []byte(sourceAssetDenom),
 		ToAssetHash:   toChainAssetHash,
 		ToAddress:     toAddressBs,
